@@ -11,7 +11,7 @@ import type { EngineState } from "../engine/engine.js";
 /**
  * CREATE Command
  *
- * Implements §3.1 — guided persona creation from scratch.
+ * Guided persona creation from scratch.
  * In the full implementation, this drives an interactive terminal session
  * with the discovery state machine and population pipeline.
  *
@@ -25,8 +25,8 @@ interface CreateOptions {
 }
 
 export async function createCommand(options: CreateOptions): Promise<void> {
-  console.log("APOCA-P — CREATE mode active");
-  console.log("Creating a new PERSONAS §P file.\n");
+  console.log("Persona-x — CREATE mode active");
+  console.log("Creating a new persona definition file.\n");
 
   if (options.nonInteractive) {
     await createNonInteractive(options.output);

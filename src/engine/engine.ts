@@ -22,8 +22,8 @@ import { buildRubricProfile, formatRubricProfile } from "./rubric/scorer.js";
  * Persona Engine — Main Orchestrator
  *
  * Coordinates the end-to-end persona creation process:
- * 1. Discovery phase (§4) — extract signals from user
- * 2. Population phase (§5) — build persona file section by section
+ * 1. Discovery phase — extract signals from user
+ * 2. Population phase — build persona file section by section
  * 3. Validation — ensure the file is complete and coherent
  *
  * The engine is designed to be driven by an external interface (CLI or web)

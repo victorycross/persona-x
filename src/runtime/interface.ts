@@ -149,7 +149,7 @@ export function generatePersonaSystemPrompt(persona: PersonaFile): string {
 
 /**
  * Determine which personas should be invoked for a given topic.
- * Uses §P-9 invocation cues to filter.
+ * Uses invocation cues to filter.
  */
 export function selectPersonasForTopic(
   topic: string,

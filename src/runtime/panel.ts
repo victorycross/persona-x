@@ -49,7 +49,7 @@ export function createPanelSession(config: PanelConfig): PanelSession {
 /**
  * Determine the speaking order for a round.
  * Personas with higher intervention frequency speak earlier.
- * This reflects §P-4's intervention_frequency dimension.
+ * This reflects the rubric's intervention_frequency dimension.
  */
 export function determineSpeakingOrder(
   personas: LoadedPersona[]

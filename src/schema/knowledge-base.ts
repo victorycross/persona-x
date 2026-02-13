@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 /**
- * Knowledge Base Use Contract (§KB-0).
- * Required if §KB exists. Defines how the persona may use its knowledge base.
+ * Knowledge Base Use Contract.
+ * Required if a knowledge base exists. Defines how the persona may use its knowledge base.
  */
 
 export const KBPermittedUse = z.enum([
@@ -34,27 +34,27 @@ export const KBUseContractSchema = z.object({
   purpose: z
     .string()
     .min(1)
-    .describe("What this KB is meant to support (§KB-0.1)"),
+    .describe("What this KB is meant to support"),
   permitted_uses: z
     .array(KBPermittedUse)
     .min(1)
-    .describe("How the persona may use KB items (§KB-0.2)"),
+    .describe("How the persona may use KB items"),
   prohibited_uses: z
     .array(z.string())
     .min(1)
-    .describe("Explicit list of prohibited uses (§KB-0.3)"),
+    .describe("Explicit list of prohibited uses"),
   currency_rule: z
     .string()
     .min(1)
-    .describe("How currency/staleness is treated (§KB-0.4)"),
+    .describe("How currency/staleness is treated"),
   citation_behaviour: z
     .string()
     .min(1)
-    .describe("How KB items are cited in panel responses (§KB-0.5)"),
+    .describe("How KB items are cited in panel responses"),
   coverage_limits: z
     .string()
     .min(1)
-    .describe("What this KB does not cover (§KB-0.6)"),
+    .describe("What this KB does not cover"),
 });
 
 export type KBUseContract = z.infer<typeof KBUseContractSchema>;

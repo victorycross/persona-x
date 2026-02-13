@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 /**
- * The six fixed rubric dimensions from the APOCA-P specification §P-4.
+ * The six fixed rubric dimensions for persona judgement profiles.
  * These names, meanings, and scale are non-negotiable.
  */
 export const RUBRIC_DIMENSIONS = [

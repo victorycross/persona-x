@@ -3,13 +3,13 @@ import { RubricProfileSchema } from "./rubric.js";
 import { KnowledgeBaseSchema } from "./knowledge-base.js";
 
 /**
- * PERSONAS §P — Complete Persona Definition Schema
+ * Complete Persona Definition Schema
  *
- * This is the canonical schema for persona files produced by the APOCA-P framework.
- * Every field maps to a specific section of the PERSONAS §P specification.
+ * This is the canonical schema for persona definition files.
+ * Every field maps to a specific section of the persona specification.
  */
 
-// §P Header — Metadata
+// Metadata
 export const PersonaTypeSchema = z.enum(["designed", "human_derived"]);
 
 export const PersonaMetadataSchema = z.object({
@@ -26,7 +26,7 @@ export const PersonaMetadataSchema = z.object({
 
 export type PersonaMetadata = z.infer<typeof PersonaMetadataSchema>;
 
-// §P-1 — Persona Purpose & Panel Use
+// Persona Purpose & Panel Use
 export const PersonaPurposeSchema = z.object({
   description: z
     .string()
@@ -44,7 +44,7 @@ export const PersonaPurposeSchema = z.object({
 
 export type PersonaPurpose = z.infer<typeof PersonaPurposeSchema>;
 
-// §P-2 — Brief Bio & Context
+// Brief Bio & Context
 export const PersonaBioSchema = z.object({
   background: z
     .string()
@@ -58,7 +58,7 @@ export const PersonaBioSchema = z.object({
 
 export type PersonaBio = z.infer<typeof PersonaBioSchema>;
 
-// §P-3 — Panel Role & Functional Contribution
+// Panel Role & Functional Contribution
 export const PanelRoleSchema = z.object({
   contribution_type: z
     .string()
@@ -80,7 +80,7 @@ export const PanelRoleSchema = z.object({
 
 export type PanelRole = z.infer<typeof PanelRoleSchema>;
 
-// §P-5 — Reasoning & Decision Tendencies
+// Reasoning & Decision Tendencies
 export const ReasoningTendenciesSchema = z.object({
   default_assumptions: z
     .array(z.string())
@@ -102,7 +102,7 @@ export const ReasoningTendenciesSchema = z.object({
 
 export type ReasoningTendencies = z.infer<typeof ReasoningTendenciesSchema>;
 
-// §P-6 — Interaction & Challenge Style
+// Interaction & Challenge Style
 export const InteractionStyleSchema = z.object({
   primary_mode: z
     .enum(["questions", "assertions", "mixed"])
@@ -122,7 +122,7 @@ export const InteractionStyleSchema = z.object({
 
 export type InteractionStyle = z.infer<typeof InteractionStyleSchema>;
 
-// §P-7 — Communication & Expression Style (Optional)
+// Communication & Expression Style (Optional)
 export const CommunicationStyleSchema = z
   .object({
     clarity_vs_brevity: z
@@ -141,7 +141,7 @@ export const CommunicationStyleSchema = z
 
 export type CommunicationStyle = z.infer<typeof CommunicationStyleSchema>;
 
-// §P-8 — Boundaries, Constraints & Refusals
+// Boundaries, Constraints & Refusals
 export const BoundariesSchema = z.object({
   will_not_engage: z
     .array(z.string())
@@ -159,7 +159,7 @@ export const BoundariesSchema = z.object({
 
 export type Boundaries = z.infer<typeof BoundariesSchema>;
 
-// §P-9 — Invocation Cues & Usage Notes
+// Invocation Cues & Usage Notes
 export const InvocationCuesSchema = z.object({
   include_when: z
     .array(z.string())
@@ -173,7 +173,7 @@ export const InvocationCuesSchema = z.object({
 
 export type InvocationCues = z.infer<typeof InvocationCuesSchema>;
 
-// §P-10 — Provenance & Version History
+// Provenance & Version History
 export const ProvenanceEntrySchema = z.object({
   version: z.string(),
   date: z.string(),
@@ -191,7 +191,7 @@ export const ProvenanceSchema = z
 export type Provenance = z.infer<typeof ProvenanceSchema>;
 
 /**
- * The complete PERSONAS §P file schema.
+ * The complete persona definition file schema.
  * This is the top-level validation for any persona file.
  */
 export const PersonaFileSchema = z.object({

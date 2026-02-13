@@ -5,13 +5,13 @@ import type { RubricProfile } from "../../schema/rubric.js";
 /**
  * Inference Engine
  *
- * Implements §5.5 — Ask vs Infer Rule.
+ * Implements the Ask vs Infer Rule.
  *
- * APOCA-P must ask for input when:
+ * The engine must ask for input when:
  * - ambiguity would materially change persona behaviour, or
  * - a boundary, refusal, or escalation posture is unclear.
  *
- * APOCA-P may infer when:
+ * The engine may infer when:
  * - multiple signals point in the same direction, and
  * - inference maintains consistency with earlier sections.
  *
@@ -44,7 +44,7 @@ export function evaluateInference(
       can_infer: false,
       confidence: "low",
       justification:
-        "Boundaries, refusals, and escalation postures must be explicitly stated. Inference is not permitted for §P-8.",
+        "Boundaries, refusals, and escalation postures must be explicitly stated. Inference is not permitted for boundaries.",
       supporting_signals: [],
       conflicts: [],
     };
@@ -57,7 +57,7 @@ export function evaluateInference(
       can_infer: false,
       confidence: "low",
       justification:
-        "Persona purpose is foundational and must be stated by the user. Inference is not permitted for §P-1.",
+        "Persona purpose is foundational and must be stated by the user. Inference is not permitted for purpose.",
       supporting_signals: [],
       conflicts: [],
     };
@@ -183,7 +183,7 @@ function detectConflicts(signals: ExtractedSignal[]): string[] {
 
 /**
  * Check whether a newly populated section is consistent with previously
- * populated sections. Implements the §5.1 rule: "Later sections may not
+ * populated sections. Enforces the rule: "Later sections may not
  * contradict earlier ones without explicit confirmation."
  */
 export function checkCrossSectionConsistency(
@@ -207,7 +207,7 @@ export function checkCrossSectionConsistency(
         reasoning.systematically_questions.length === 0
       ) {
         warnings.push(
-          "§P-5 (reasoning) has no systematically questioned items, but §P-4 shows high evidence threshold. These should align."
+          "Reasoning has no systematically questioned items, but the rubric shows high evidence threshold. These should align."
         );
       }
     }
@@ -228,7 +228,7 @@ export function checkCrossSectionConsistency(
       interaction?.challenge_strength === "gentle"
     ) {
       warnings.push(
-        "§P-6 shows gentle questioning, but §P-4 indicates high intervention frequency. Consider whether the persona actively intervenes with questions or remains more passive."
+        "Interaction style shows gentle questioning, but the rubric indicates high intervention frequency. Consider whether the persona actively intervenes with questions or remains more passive."
       );
     }
   }

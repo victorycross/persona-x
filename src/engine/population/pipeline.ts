@@ -13,28 +13,27 @@ import type { DiscoveryState } from "../discovery/discovery.js";
 /**
  * Population Pipeline
  *
- * Implements §5 of the APOCA-P specification.
  * Enforces the fixed population order and manages the state machine
  * that builds a persona file section by section.
  */
 
 /**
- * The fixed population order from §5.1.
+ * The fixed population order.
  * Later sections must not contradict earlier ones without explicit confirmation.
  */
 export const POPULATION_ORDER = [
-  "purpose",       // §P-1 Persona Purpose & Panel Use
-  "panel_role",    // §P-3 Panel Role & Functional Contribution
-  "rubric",        // §P-4 Judgement & Reasoning Profile
-  "reasoning",     // §P-5 Reasoning & Decision Tendencies
-  "interaction",   // §P-6 Interaction & Challenge Style
-  "boundaries",    // §P-8 Boundaries, Constraints & Refusals
-  "optional",      // §P-7, §KB, §P-10 (optional sections)
+  "purpose",       // Persona Purpose & Panel Use
+  "panel_role",    // Panel Role & Functional Contribution
+  "rubric",        // Judgement & Reasoning Profile
+  "reasoning",     // Reasoning & Decision Tendencies
+  "interaction",   // Interaction & Challenge Style
+  "boundaries",    // Boundaries, Constraints & Refusals
+  "optional",      // Communication, Knowledge Base, Provenance (optional sections)
 ] as const;
 
 export type PopulationSection = (typeof POPULATION_ORDER)[number];
 
-/** Permitted population methods from §5.2 */
+/** Permitted population methods */
 export type PopulationMethod =
   | "direct_input"
   | "structured_choice"
@@ -160,13 +159,13 @@ export function recordPopulation(
 
 /**
  * Check whether the pipeline should ask the user or infer.
- * Implements §5.5 — Ask vs Infer Rule.
+ * Implements the Ask vs Infer Rule.
  */
 export function shouldAskUser(
   section: PopulationSection,
   state: PipelineState
 ): boolean {
-  // Always ask for boundaries — §5.5 says ask when "a boundary, refusal, or escalation posture is unclear"
+  // Always ask for boundaries — ask when "a boundary, refusal, or escalation posture is unclear"
   if (section === "boundaries") return true;
 
   // Always ask for purpose — foundational section

@@ -1,7 +1,7 @@
 {
   "name": "persona-x",
   "version": "0.1.0",
-  "description": "APOCA framework implementation — structured AI persona creation, validation, and panel runtime",
+  "description": "Structured AI persona creation, validation, and panel runtime",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -26,7 +26,7 @@
     "ai",
     "panel",
     "orchestration",
-    "apoca",
+    "structured-personas",
     "llm"
   ],
   "author": "Brightpath Technologies",

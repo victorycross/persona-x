@@ -6,7 +6,7 @@ import type { PersonaFile } from "../schema/persona.js";
 /**
  * REFINE Command
  *
- * Implements §3.2 — targeted adjustment of an existing PERSONAS §P file.
+ * Targeted adjustment of an existing persona definition file.
  * REFINE assumes the underlying scaffold is correct and focuses on
  * improving precision, clarity, or alignment within specific sections.
  */
@@ -20,7 +20,7 @@ export async function refineCommand(
   filePath: string,
   options: RefineOptions
 ): Promise<void> {
-  console.log("APOCA-P — REFINE mode active");
+  console.log("Persona-x — REFINE mode active");
   console.log(`Loading persona file: ${filePath}\n`);
 
   // Load and validate the existing file
@@ -38,15 +38,15 @@ export async function refineCommand(
 
   // Show available sections
   const sections = [
-    { key: "purpose", label: "§P-1 Persona Purpose & Panel Use" },
-    { key: "bio", label: "§P-2 Brief Bio & Context" },
-    { key: "panel_role", label: "§P-3 Panel Role & Functional Contribution" },
-    { key: "rubric", label: "§P-4 Judgement & Reasoning Profile" },
-    { key: "reasoning", label: "§P-5 Reasoning & Decision Tendencies" },
-    { key: "interaction", label: "§P-6 Interaction & Challenge Style" },
-    { key: "communication", label: "§P-7 Communication Style (optional)" },
-    { key: "boundaries", label: "§P-8 Boundaries, Constraints & Refusals" },
-    { key: "invocation", label: "§P-9 Invocation Cues & Usage Notes" },
+    { key: "purpose", label: "Persona Purpose & Panel Use" },
+    { key: "bio", label: "Brief Bio & Context" },
+    { key: "panel_role", label: "Panel Role & Functional Contribution" },
+    { key: "rubric", label: "Judgement & Reasoning Profile" },
+    { key: "reasoning", label: "Reasoning & Decision Tendencies" },
+    { key: "interaction", label: "Interaction & Challenge Style" },
+    { key: "communication", label: "Communication Style (optional)" },
+    { key: "boundaries", label: "Boundaries, Constraints & Refusals" },
+    { key: "invocation", label: "Invocation Cues & Usage Notes" },
   ];
 
   if (options.section) {

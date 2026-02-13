@@ -7,9 +7,9 @@ import { refineCommand } from "./refine.js";
 /**
  * Persona-x CLI
  *
- * Two primary commands matching the APOCA-P interaction phases:
- * - create: Generate a new PERSONAS §P file from scratch (§3.1)
- * - refine: Adjust an existing PERSONAS §P file incrementally (§3.2)
+ * Two primary commands:
+ * - create: Generate a new persona definition file from scratch
+ * - refine: Adjust an existing persona definition file incrementally
  * - validate: Check a persona file against the schema
  */
 
@@ -18,13 +18,13 @@ const program = new Command();
 program
   .name("persona-x")
   .description(
-    "APOCA framework — create, validate, and manage structured AI persona files"
+    "Persona-x — create, validate, and manage structured AI persona files"
   )
   .version("0.1.0");
 
 program
   .command("create")
-  .description("Create a new PERSONAS §P persona file through guided discovery")
+  .description("Create a new persona definition file through guided discovery")
   .option("-o, --output <path>", "Output file path", "./persona.yaml")
   .option("--non-interactive", "Use defaults instead of prompting (for testing)")
   .action(async (options) => {
@@ -33,7 +33,7 @@ program
 
 program
   .command("refine")
-  .description("Refine an existing PERSONAS §P file")
+  .description("Refine an existing persona definition file")
   .argument("<file>", "Path to the persona YAML file to refine")
   .option("-s, --section <section>", "Specific section to refine")
   .option("-o, --output <path>", "Output file path (defaults to overwriting input)")
@@ -43,7 +43,7 @@ program
 
 program
   .command("validate")
-  .description("Validate a persona YAML file against the PERSONAS §P schema")
+  .description("Validate a persona YAML file against the persona definition schema")
   .argument("<file>", "Path to the persona YAML file to validate")
   .action(async (file) => {
     const { loadPersonaFromFile } = await import("../runtime/loader.js");

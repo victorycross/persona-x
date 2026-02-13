@@ -1,5 +1,5 @@
 /**
- * Persona-x — APOCA Framework Implementation
+ * Persona-x — Structured AI Persona Creation & Panel Runtime
  *
  * Library entry point. Exports all public types, schemas, and functions
  * for use by consumers of the persona-x package.

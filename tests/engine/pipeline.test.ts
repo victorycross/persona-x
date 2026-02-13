@@ -69,7 +69,7 @@ describe("Population Pipeline", () => {
 });
 
 describe("Population Order", () => {
-  it("follows the fixed order from §5.1", () => {
+  it("follows the fixed population order", () => {
     expect(POPULATION_ORDER[0]).toBe("purpose");
     expect(POPULATION_ORDER[1]).toBe("panel_role");
     expect(POPULATION_ORDER[2]).toBe("rubric");

@@ -3,12 +3,11 @@ import { z } from "zod";
 /**
  * Discovery State Machine
  *
- * Implements §4 of the APOCA-P specification.
  * Manages the structured, minimal questioning process that extracts
  * judgement and behaviour signals from the user.
  */
 
-/** The priority signals from §4.2 that materially affect persona behaviour */
+/** The priority signals that materially affect persona behaviour */
 export const PRIORITY_SIGNALS = [
   "discomfort_triggers",
   "evidence_change_thresholds",
@@ -19,7 +18,7 @@ export const PRIORITY_SIGNALS = [
 
 export type PrioritySignal = (typeof PRIORITY_SIGNALS)[number];
 
-/** Question types from §4.1 — decision-oriented, not descriptive */
+/** Question types — decision-oriented, not descriptive */
 export type QuestionType =
   | "choice" // Binary or multi-option selection
   | "contrast" // "Closer to X or Y?"
@@ -55,7 +54,7 @@ export interface DiscoveryState {
 
 /**
  * Check if we have sufficient signal to populate the scaffold coherently.
- * Implements §4.4 — Signal Sufficiency Rule.
+ * Implements the Signal Sufficiency Rule.
  */
 export function hasSignalSufficiency(state: DiscoveryState): boolean {
   const coveredSignals = new Set(state.signals.map((s) => s.signal));
@@ -111,7 +110,7 @@ export function createDiscoveryState(): DiscoveryState {
 
 /**
  * Core discovery question bank.
- * These are the minimal, high-leverage questions from §4.
+ * These are the minimal, high-leverage questions for discovery.
  * The engine selects from this bank based on which signals are missing.
  */
 export const QUESTION_BANK: DiscoveryQuestion[] = [

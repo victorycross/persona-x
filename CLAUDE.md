@@ -2,13 +2,13 @@
 
 ## Project Overview
 
-Persona-x is a TypeScript implementation of the APOCA (Assistant Persona Oriented Creator Assistant) framework. It provides tools for creating, validating, refining, and running structured AI persona definition files ("PERSONAS §P files") that can be consumed by panel-based and orchestrated AI systems.
+Persona-x is a TypeScript framework for creating, validating, refining, and running structured AI persona definition files that can be consumed by panel-based and orchestrated AI systems.
 
 The system turns implicit judgement into explicit, comparable, inspectable persona artefacts.
 
 ### Core Concepts
 
-- **Persona File (PERSONAS §P)**: A structured YAML document defining how a persona thinks, reasons, judges, and behaves. Not a character or role-play construct — a governed design artefact.
+- **Persona Definition File**: A structured YAML document defining how a persona thinks, reasons, judges, and behaves. Not a character or role-play construct — a governed design artefact.
 - **Panel**: A multi-agent discussion system where multiple personas debate, review, or analyse a topic. Personas are deliberately invoked based on what functional contribution is needed.
 - **Rubric**: Six quantified dimensions (1-10 scale) that define the shape of a persona's judgement. Makes personas comparable without narrative.
 - **Population Pipeline**: A fixed-order state machine that builds persona files section by section, using direct input, structured choices, scenario interpretation, or conservative inference.
@@ -22,13 +22,13 @@ Persona-x/
 ├── tsconfig.json              # TypeScript configuration
 ├── vitest.config.ts           # Test configuration
 ├── specs/                     # Framework specification documents
-│   └── APOCA-P-SPEC.md       # Improved APOCA-P specification
+│   └── SPEC.md               # Persona-x specification
 ├── src/
 │   ├── index.ts               # Library entry point (exports)
 │   ├── schema/                # Persona file schema & validation
 │   │   ├── persona.ts         # Zod schema + TypeScript types
 │   │   ├── rubric.ts          # Rubric dimensions & scoring
-│   │   └── knowledge-base.ts  # Optional §KB schema
+│   │   └── knowledge-base.ts  # Optional knowledge base schema
 │   ├── engine/                # Core persona creation engine
 │   │   ├── discovery/         # Signal extraction & questioning
 │   │   │   └── discovery.ts   # Discovery state machine
@@ -51,7 +51,7 @@ Persona-x/
 │       ├── yaml.ts            # YAML serialisation/deserialisation
 │       └── version.ts         # Semantic versioning for personas
 ├── examples/                  # Example persona files
-│   └── risk-analyst.yaml      # Sample PERSONAS §P file
+│   └── risk-analyst.yaml      # Sample persona definition file
 └── tests/                     # Test suites
     ├── schema/                # Schema validation tests
     ├── engine/                # Engine logic tests
@@ -114,15 +114,15 @@ export type PersonaPurpose = z.infer<typeof PersonaPurposeSchema>;
 
 ### Fixed Population Order
 
-The population pipeline in `src/engine/population/pipeline.ts` MUST follow this order (from the APOCA-P spec §5.1):
+The population pipeline in `src/engine/population/pipeline.ts` MUST follow this order:
 
-1. §P-1 Persona Purpose & Panel Use
-2. §P-3 Panel Role & Functional Contribution
-3. §P-4 Judgement & Reasoning Profile (Rubric)
-4. §P-5 Reasoning & Decision Tendencies
-5. §P-6 Interaction & Challenge Style
-6. §P-8 Boundaries, Constraints & Refusals
-7. Optional sections (§P-7, §KB, §P-10)
+1. Persona Purpose & Panel Use
+2. Panel Role & Functional Contribution
+3. Judgement & Reasoning Profile (Rubric)
+4. Reasoning & Decision Tendencies
+5. Interaction & Challenge Style
+6. Boundaries, Constraints & Refusals
+7. Optional sections (Communication, Knowledge Base, Provenance)
 
 Later sections must not contradict earlier ones without explicit confirmation.
 
@@ -141,7 +141,7 @@ Every score MUST have an accompanying interpretive note. Scores without notes ar
 
 ### Inference Rules
 
-The inference engine (`src/engine/inference/`) follows the ask-vs-infer contract from §5.5:
+The inference engine (`src/engine/inference/`) follows the ask-vs-infer contract:
 
 - **Must ask** when: ambiguity would materially change persona behaviour, or a boundary/refusal/escalation posture is unclear.
 - **May infer** when: multiple signals point the same direction AND inference maintains consistency with earlier sections.
@@ -192,21 +192,21 @@ metadata:
   last_updated: "2026-02-13"
   audience: "Panel tools, orchestration agents"
 
-purpose:                  # §P-1
+purpose:
   description: "..."
   invoke_when: ["..."]
   do_not_invoke_when: ["..."]
 
-bio:                      # §P-2
+bio:
   background: "..."
   perspective_origin: "..."
 
-panel_role:               # §P-3
+panel_role:
   contribution_type: "challenger"
   expected_value: "..."
   failure_modes_surfaced: ["..."]
 
-rubric:                   # §P-4
+rubric:
   risk_appetite:
     score: 3
     note: "..."
@@ -215,24 +215,24 @@ rubric:                   # §P-4
     note: "..."
   # ... (all 6 dimensions required)
 
-reasoning:                # §P-5
+reasoning:
   default_assumptions: ["..."]
   notices_first: ["..."]
   systematically_questions: ["..."]
   under_pressure: "..."
 
-interaction:              # §P-6
+interaction:
   primary_mode: "questions"  # questions | assertions | mixed
   challenge_strength: "moderate"
   silent_when: ["..."]
   handles_poor_input: "..."
 
-boundaries:               # §P-8
+boundaries:
   will_not_engage: ["..."]
   will_not_claim: ["..."]
   defers_by_design: ["..."]
 
-invocation:               # §P-9
+invocation:
   include_when: ["..."]
   exclude_when: ["..."]
 ```
@@ -246,8 +246,8 @@ invocation:               # §P-9
 
 ## Important Notes for AI Assistants
 
-1. **Do not confuse APOCA-P with AVOCA.** APOCA-P creates persona *judgement/reasoning* profiles. AVOCA creates *voice/tone* profiles. This repo implements APOCA-P.
-2. **The rubric is sacred.** The six dimensions, their names, their 1-10 scale, and the requirement for interpretive notes are non-negotiable parts of the spec.
+1. **Persona-x creates judgement/reasoning profiles, not voice/tone profiles.** Voice profiling is a separate system. This repo implements persona creation only.
+2. **The rubric is sacred.** The six dimensions, their names, their 1-10 scale, and the requirement for interpretive notes are non-negotiable.
 3. **Population order is fixed.** Never generate later sections before earlier ones. Never allow later sections to contradict earlier ones silently.
 4. **Persona files are artefacts, not conversations.** Changes must be explicit, scoped, versioned, and traceable.
 5. **Inference is conservative.** When in doubt, ask. Only infer when multiple signals converge and consistency is maintained.

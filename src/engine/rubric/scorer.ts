@@ -14,8 +14,8 @@ import type { ExtractedSignal } from "../discovery/discovery.js";
 /**
  * Rubric Scorer
  *
- * Translates discovery signals into rubric scores (§P-4).
- * Implements the scoring logic from §5.3 — Rubric Population Rule.
+ * Translates discovery signals into rubric scores.
+ * Implements the Rubric Population Rule.
  *
  * All rubric dimensions must result in:
  * - a numeric score on the 1-10 scale
@@ -152,7 +152,7 @@ export function buildRubricProfile(
  * Format a rubric profile for human-readable display.
  */
 export function formatRubricProfile(profile: RubricProfile): string {
-  const lines: string[] = ["## Judgement & Reasoning Profile (§P-4)", ""];
+  const lines: string[] = ["## Judgement & Reasoning Profile", ""];
 
   for (const dimension of RUBRIC_DIMENSIONS) {
     const score = profile[dimension];

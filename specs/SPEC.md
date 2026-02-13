@@ -1,6 +1,6 @@
-# APOCA-P Specification — Improved
+# Persona-x Specification
 
-**Assistant Persona Oriented Creator Assistant**
+**Structured AI Persona Creation Framework**
 Version: 2.0.0-draft
 Last updated: 13 Feb 2026 (AEST)
 Owner: Travers Owers / Brightpath Technologies
@@ -9,11 +9,12 @@ Owner: Travers Owers / Brightpath Technologies
 
 ## What Changed from v1
 
-This specification is a restructured and improved version of the original APOCA-P
+This specification is a restructured and improved version of the original
 document. Key changes:
 
-1. **Separated APOCA-P from AVOCA.** The original document mixed two systems (persona
-   creation and voice cloning). This spec covers only APOCA-P. AVOCA should have its own spec.
+1. **Separated persona creation from voice profiling.** The original document mixed two
+   systems (persona creation and voice cloning). This spec covers only persona creation.
+   Voice profiling should have its own spec.
 2. **Added machine-readable schema.** Persona files are now defined as YAML with a
    JSON Schema / Zod validation layer, not just prose descriptions.
 3. **Defined the panel runtime interface.** The contract between persona files and the
@@ -28,59 +29,59 @@ document. Key changes:
 
 ---
 
-## §1 — Purpose & Scope
+## 1 — Purpose & Scope
 
-APOCA-P exists to create PERSONAS §P files — structured artefacts that define how an AI
-persona thinks, reasons, judges, and behaves in panel-based or orchestrated AI systems.
+Persona-x exists to create persona definition files — structured artefacts that define how
+an AI persona thinks, reasons, judges, and behaves in panel-based or orchestrated AI systems.
 
-### What APOCA-P Does
+### What Persona-x Does
 
 - Guides a user through focused discovery to extract judgement and behaviour signals
 - Populates a fixed-structure persona scaffold using those signals
 - Produces a validated, versioned YAML file that can be loaded by panel systems
 - Supports incremental refinement without destabilising the persona
 
-### What APOCA-P Does Not Do
+### What Persona-x Does Not Do
 
 - Simulate people, role-play, or generate opinions
 - Validate decisions or approve outcomes
 - Replace subject-matter expertise
-- Create voice/tone profiles (that is AVOCA's job)
+- Create voice/tone profiles (that is a separate system's job)
 - Run or manage panels (that is the runtime's job)
 
 ### Accountability Boundary
 
-APOCA-P is accountable for the **integrity of the persona file** and nothing beyond it.
-Once the file is created, APOCA-P's responsibility ends. How the file is used in a panel
-is the runtime's responsibility.
+The creation engine is accountable for the **integrity of the persona file** and nothing
+beyond it. Once the file is created, the engine's responsibility ends. How the file is
+used in a panel is the runtime's responsibility.
 
 ---
 
-## §2 — APOCA-P Agent Behaviour
+## 2 — Creation Engine Behaviour
 
-### §2.1 Voice & Stance
+### 2.1 Voice & Stance
 
-APOCA-P mirrors the clarity and density of the user while maintaining:
+The engine mirrors the clarity and density of the user while maintaining:
 - Direct, collaborative, professional tone
 - Short to medium sentences with clear logical flow
 - Active voice by default; contractions permitted
 - Confident and economical — no filler, no theatrics
 - Australian English spelling (behaviour, organisation, licence, humour)
 
-APOCA-P is opinionated about **structure** but restrained about **content**.
+The engine is opinionated about **structure** but restrained about **content**.
 
-### §2.2 Questioning Approach
+### 2.2 Questioning Approach
 
 Questions are:
 - Decision-oriented, not descriptive
 - Framed as choices, contrasts, or spectra where possible
 - Adaptive to the amount and quality of signal provided
 
-APOCA-P stops asking questions once sufficient signal exists to populate the scaffold.
+The engine stops asking questions once sufficient signal exists to populate the scaffold.
 
-### §2.3 Priority Signals
+### 2.3 Priority Signals
 
-When gathering input, APOCA-P prioritises signals that materially affect persona behaviour:
+When gathering input, the engine prioritises signals that materially affect persona behaviour:
 
 | Signal | Why It Matters |
 |---|---|
@@ -92,27 +93,27 @@ When gathering input, APOCA-P prioritises signals that materially affect persona
 
 These are favoured over background detail or stylistic preference.
 
-### §2.4 Signal Sufficiency Rule
+### 2.4 Signal Sufficiency Rule
 
-APOCA-P does not aim for completeness. Once the scaffold can be populated in a way that is:
+The engine does not aim for completeness. Once the scaffold can be populated in a way that is:
 - Internally consistent
 - Comparable to other personas
 - Usable in a panel context
 
 ...questioning stops and generation proceeds.
 
-### §2.5 Session Independence
+### 2.5 Session Independence
 
-Each session is self-contained. APOCA-P does not assume continuity, merge personas, or
+Each session is self-contained. The engine does not assume continuity, merge personas, or
 reuse prior judgements unless the user explicitly states otherwise.
 
 ---
 
-## §3 — Interaction Phases
+## 3 — Interaction Phases
 
-### §3.1 CREATE
+### 3.1 CREATE
 
-**Purpose**: Generate a new PERSONAS §P file from scratch.
+**Purpose**: Generate a new persona definition file from scratch.
 
 **Process**:
 1. Confirm the intended purpose and use of the persona
@@ -122,11 +123,11 @@ reuse prior judgements unless the user explicitly states otherwise.
 5. Generate a complete file using the approved scaffold
 6. Present the file for focused user review
 
-**Completion**: A full PERSONAS §P file has been generated and presented.
+**Completion**: A full persona definition file has been generated and presented.
 
-### §3.2 REFINE
+### 3.2 REFINE
 
-**Purpose**: Adjust an existing PERSONAS §P file incrementally.
+**Purpose**: Adjust an existing persona definition file incrementally.
 
 **Process**:
 1. Confirm which section(s) are in scope
@@ -139,7 +140,7 @@ reuse prior judgements unless the user explicitly states otherwise.
 
 **Completion**: Requested changes applied, version bumped, provenance updated.
 
-### §3.3 Phase Discipline
+### 3.3 Phase Discipline
 
 - Active phase is signalled when relevant
 - Single focus within each phase
@@ -147,36 +148,36 @@ reuse prior judgements unless the user explicitly states otherwise.
 
 ---
 
-## §4 — Population Process
+## 4 — Population Process
 
-### §4.1 Fixed Population Order
+### 4.1 Fixed Population Order
 
 When creating a new persona, sections are populated in this order:
 
-| Order | Section | ID |
-|---|---|---|
-| 1 | Persona Purpose & Panel Use | §P-1 |
-| 2 | Panel Role & Functional Contribution | §P-3 |
-| 3 | Judgement & Reasoning Profile (Rubric) | §P-4 |
-| 4 | Reasoning & Decision Tendencies | §P-5 |
-| 5 | Interaction & Challenge Style | §P-6 |
-| 6 | Boundaries, Constraints & Refusals | §P-8 |
-| 7 | Optional sections | §P-7, §KB, §P-9, §P-10 |
+| Order | Section |
+|---|---|
+| 1 | Persona Purpose & Panel Use |
+| 2 | Panel Role & Functional Contribution |
+| 3 | Judgement & Reasoning Profile (Rubric) |
+| 4 | Reasoning & Decision Tendencies |
+| 5 | Interaction & Challenge Style |
+| 6 | Boundaries, Constraints & Refusals |
+| 7 | Optional sections (Communication, Knowledge Base, Provenance) |
 
 Later sections must not contradict earlier ones without explicit confirmation.
 
-### §4.2 Permitted Population Methods
+### 4.2 Permitted Population Methods
 
 | Method | Description |
 |---|---|
 | Direct input | User states the information explicitly |
 | Structured choice | User selects from contrasts, spectra, or ranked options |
-| Scenario-based | User reacts to a situation; APOCA-P interprets into structure |
-| Inference | APOCA-P derives values from earlier inputs when signal is sufficient |
+| Scenario-based | User reacts to a situation; the engine interprets into structure |
+| Inference | The engine derives values from earlier inputs when signal is sufficient |
 
 The method used does not change the output structure.
 
-### §4.3 Ask vs Infer Rule
+### 4.3 Ask vs Infer Rule
 
 **Must ask** when:
 - Ambiguity would materially change persona behaviour
@@ -188,7 +189,7 @@ The method used does not change the output structure.
 
 Inference is for momentum, not invention.
 
-### §4.4 Rubric Population Rule
+### 4.4 Rubric Population Rule
 
 All six rubric dimensions must produce:
 - A numeric score on the 1-10 scale
@@ -199,15 +200,15 @@ Regardless of method, the output must be explicit and comparable across personas
 
 ---
 
-## §5 — PERSONAS §P File Schema
+## 5 — Persona Definition File Schema
 
-### §5.1 Format
+### 5.1 Format
 
 - **File format**: YAML (UTF-8)
 - **Validation**: JSON Schema / Zod
 - **Version**: Semantic versioning (MAJOR.MINOR.PATCH)
 
-### §5.2 Required Sections
+### 5.2 Required Sections
 
 | Section | Key | Purpose |
 |---|---|---|
@@ -221,7 +222,7 @@ Regardless of method, the output must be explicit and comparable across personas
 | Boundaries | `boundaries` | What the persona will not do |
 | Invocation | `invocation` | When to include/exclude this persona |
 
-### §5.3 Optional Sections
+### 5.3 Optional Sections
 
 | Section | Key | Purpose |
 |---|---|---|
@@ -229,7 +230,7 @@ Regardless of method, the output must be explicit and comparable across personas
 | Knowledge Base | `knowledge_base` | Scoped reference knowledge with use contract |
 | Provenance | `provenance` | Creation tool and version history |
 
-### §5.4 Rubric Dimensions (Fixed)
+### 5.4 Rubric Dimensions (Fixed)
 
 | Dimension | Key | Meaning |
 |---|---|---|
@@ -243,9 +244,9 @@ Regardless of method, the output must be explicit and comparable across personas
 Scale: 1-10. Midpoint (5-6) = balanced/situational.
 Every score requires an interpretive note. Scores without notes are invalid.
 
-### §5.5 Knowledge Base Contract (§KB)
+### 5.5 Knowledge Base Contract
 
-When present, §KB must include:
+When present, the knowledge base must include:
 - Purpose statement
 - Permitted uses (reference, framing, challenge, boundary-setting)
 - Prohibited uses (explicit list)
@@ -256,14 +257,14 @@ When present, §KB must include:
 
 ---
 
-## §6 — Panel Runtime Interface
+## 6 — Panel Runtime Interface
 
-### §6.1 Persona Loading
+### 6.1 Persona Loading
 
 Panel systems load persona YAML files, validate them against the schema, and hydrate
 them into runtime objects. Invalid files are rejected with specific error messages.
 
-### §6.2 System Prompt Generation
+### 6.2 System Prompt Generation
 
 Each persona file is translated into a system prompt fragment that shapes LLM behaviour:
 - Purpose and role as context
@@ -272,12 +273,12 @@ Each persona file is translated into a system prompt fragment that shapes LLM be
 - Interaction style as engagement rules
 - Boundaries as hard constraints
 
-### §6.3 Speaking Order
+### 6.3 Speaking Order
 
 Personas speak in order of intervention frequency (highest first). Low-intervention
 personas may skip rounds where nothing material is at stake.
 
-### §6.4 Rubric-Driven Behaviour
+### 6.4 Rubric-Driven Behaviour
 
 Rubric scores modulate LLM generation:
 - **Risk Appetite** affects how the persona evaluates proposals
@@ -287,24 +288,24 @@ Rubric scores modulate LLM generation:
 - **Escalation Bias** affects whether concerns are handled or escalated
 - **Delivery vs Rigour** affects the depth/speed trade-off in responses
 
-### §6.5 Boundary Enforcement
+### 6.5 Boundary Enforcement
 
-Boundaries from §P-8 are enforced as hard constraints. The runtime must prevent a
+Boundaries are enforced as hard constraints. The runtime must prevent a
 persona from engaging on topics it has declared out of scope.
 
 ---
 
-## §7 — Traceability
+## 7 — Traceability
 
-### §7.1 Build Trace
+### 7.1 Build Trace
 
-Records how APOCA-P constructed each section:
+Records how the engine constructed each section:
 - Which population method was used
 - What signals informed the section
 - Whether inference was applied and why
 - Confidence level
 
-### §7.2 Persona Audit Log
+### 7.2 Persona Audit Log
 
 Records the version history of a persona file:
 - Version number (semver)
@@ -312,7 +313,7 @@ Records the version history of a persona file:
 - Which sections changed
 - Structured description of changes
 
-### §7.3 Version Bump Rules
+### 7.3 Version Bump Rules
 
 | Change Type | Bump | Examples |
 |---|---|---|
@@ -322,9 +323,9 @@ Records the version history of a persona file:
 
 ---
 
-## §8 — Guardrails
+## 8 — Guardrails
 
-1. **APOCA-P is a builder, not a persona.** It never simulates, role-plays, or offers
+1. **The engine is a builder, not a persona.** It never simulates, role-plays, or offers
    opinions on the topic a persona will be used for.
 2. **No silent merging.** Personas are never merged, collapsed, or adjusted silently
    across iterations.
@@ -339,10 +340,10 @@ Records the version history of a persona file:
 
 ---
 
-## Appendix A — Agent Provenance
+## Appendix A — Provenance
 
-APOCA-P is a persona-creation assistant designed by Travers Owers. It produces
-structured PERSONAS §P files for use in panel-based and orchestrated AI systems.
+Persona-x is a persona-creation tool designed by Travers Owers. It produces
+structured persona definition files for use in panel-based and orchestrated AI systems.
 
 ### Recommended LLM Configuration
 
@@ -357,27 +358,27 @@ structured PERSONAS §P files for use in panel-based and orchestrated AI systems
 
 ---
 
-## Appendix B — Relationship to AVOCA
+## Appendix B — Relationship to Voice Profiling
 
-AVOCA (Assistant Voice-Oriented Creator Assistant) is a sibling system that creates
-**voice/tone profiles** rather than **judgement/reasoning profiles**.
+Voice profiling is a sibling system that creates **voice/tone profiles** rather than
+**judgement/reasoning profiles**.
 
-| Aspect | APOCA-P | AVOCA |
+| Aspect | Persona-x | Voice Profiling |
 |---|---|---|
 | Focus | How a persona thinks and decides | How a persona sounds and writes |
 | Rubric | 6 judgement dimensions (1-10) | 8 voice markers (1-5) |
-| Output | PERSONAS §P file (YAML) | Voice Pack + Instruction File (text) |
-| Consumer | Panel systems, orchestration agents | ChatPwC assistant builder |
+| Output | Persona definition file (YAML) | Voice Pack + Instruction File (text) |
+| Consumer | Panel systems, orchestration agents | Assistant builder tools |
 | Data source | User-described persona design | User-authored writing samples |
 
-A full persona could combine both systems: APOCA-P for the judgement profile and AVOCA
-for the expression layer. The two outputs are complementary, not competing.
+A full persona could combine both systems: Persona-x for the judgement profile and voice
+profiling for the expression layer. The two outputs are complementary, not competing.
 
 ---
 
 ## Appendix C — Future Considerations
 
-1. **Unified persona format**: Combine APOCA-P judgement profile with AVOCA expression
+1. **Unified persona format**: Combine judgement profile with voice/expression
    profile in a single file with two rubric layers.
 2. **Panel consensus detection**: Algorithms for detecting when personas converge or
    deadlock, and when to inject new perspectives.
