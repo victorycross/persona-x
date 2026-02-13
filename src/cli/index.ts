@@ -27,7 +27,7 @@ program
   .description("Create a new persona definition file through guided discovery")
   .option("-o, --output <path>", "Output file path", "./persona.yaml")
   .option("--non-interactive", "Use defaults instead of prompting (for testing)")
-  .action(async (options) => {
+  .action(async (options: { output: string; nonInteractive?: boolean }) => {
     await createCommand(options);
   });
 
@@ -37,7 +37,7 @@ program
   .argument("<file>", "Path to the persona YAML file to refine")
   .option("-s, --section <section>", "Specific section to refine")
   .option("-o, --output <path>", "Output file path (defaults to overwriting input)")
-  .action(async (file, options) => {
+  .action(async (file: string, options: { section?: string; output?: string }) => {
     await refineCommand(file, options);
   });
 
@@ -45,7 +45,7 @@ program
   .command("validate")
   .description("Validate a persona YAML file against the persona definition schema")
   .argument("<file>", "Path to the persona YAML file to validate")
-  .action(async (file) => {
+  .action(async (file: string) => {
     const { loadPersonaFromFile } = await import("../runtime/loader.js");
     const result = await loadPersonaFromFile(file);
 
@@ -72,7 +72,7 @@ program
   .argument("<files...>", "Paths to persona YAML files")
   .option("-t, --topic <topic>", "Discussion topic", "General review")
   .option("-r, --rounds <number>", "Number of discussion rounds", "3")
-  .action(async (files, options) => {
+  .action(async (files: string[], options: { topic: string; rounds: string }) => {
     const { loadPersonasForPanel } = await import("../runtime/loader.js");
     const { createPanelSession, determineSpeakingOrder } = await import(
       "../runtime/panel.js"

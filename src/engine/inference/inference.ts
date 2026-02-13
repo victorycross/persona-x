@@ -1,6 +1,5 @@
 import type { ExtractedSignal } from "../discovery/discovery.js";
 import type { PipelineState, PopulationSection } from "../population/pipeline.js";
-import type { RubricProfile } from "../../schema/rubric.js";
 
 /**
  * Inference Engine

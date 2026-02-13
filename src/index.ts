@@ -146,6 +146,75 @@ export {
 
 export type { PanelSession } from "./runtime/panel.js";
 
+// LLM exports
+export {
+  createClient,
+  sendMessage,
+  sendMessageForJSON,
+} from "./llm/client.js";
+
+export type { LLMResponse, LLMMessage, LLMRequestOptions } from "./llm/client.js";
+
+export {
+  extractSignals,
+  extractPurpose,
+  generateConversationalQuestion,
+} from "./llm/discovery-llm.js";
+
+export { generateSection } from "./llm/population-llm.js";
+
+export {
+  generatePersonaResponse,
+  generateRoundSummary,
+} from "./llm/panel-llm.js";
+
+// Decision Engine exports
+export {
+  EVALUATION_DIMENSIONS,
+  EVALUATION_WEIGHTS,
+  EvaluationScoreSchema,
+  DECISION_STAGES,
+  StageDecisionSchema,
+  StageVerdictSchema,
+  OpportunityBriefSchema,
+  ChallengeReportSchema,
+  PrototypeSpecSchema,
+  DeliveryPlanSchema,
+  calculateCompositeScore,
+  checkStage1Gate,
+  checkStage2Gate,
+} from "./decision-engine/schema.js";
+
+export type {
+  EvaluationDimension,
+  EvaluationScore,
+  DecisionStage,
+  StageDecision,
+  StageVerdict,
+  OpportunityBrief,
+  ChallengeReport,
+  PrototypeSpec,
+  DeliveryPlan,
+  GateResult,
+} from "./decision-engine/schema.js";
+
+export {
+  createDecisionPipeline,
+  getCurrentStagePanel,
+  recordStageResult,
+  advanceToNextStage,
+  isPipelineDone,
+  formatAuditTrail,
+  checkKillCriteria,
+  STAGE_PANELS,
+} from "./decision-engine/pipeline.js";
+
+export type {
+  DecisionPipelineState,
+  AuditEntry,
+  StagePanel,
+} from "./decision-engine/pipeline.js";
+
 // Utility exports
 export {
   personaToYaml,

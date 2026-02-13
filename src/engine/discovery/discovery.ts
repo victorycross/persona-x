@@ -1,5 +1,3 @@
-import { z } from "zod";
-
 /**
  * Discovery State Machine
  *
@@ -57,8 +55,6 @@ export interface DiscoveryState {
  * Implements the Signal Sufficiency Rule.
  */
 export function hasSignalSufficiency(state: DiscoveryState): boolean {
-  const coveredSignals = new Set(state.signals.map((s) => s.signal));
-
   // Need at least purpose established
   if (!state.persona_purpose) return false;
 

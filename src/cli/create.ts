@@ -1,22 +1,30 @@
 import {
   createEngineState,
-  getNextAction,
   transitionToPopulation,
   transitionToReview,
 } from "../engine/engine.js";
-import { writePersonaFile, personaToYaml } from "../utils/yaml.js";
+import {
+  advanceSection,
+  recordPopulation,
+  getCurrentSection,
+  isPipelineComplete,
+} from "../engine/population/pipeline.js";
+import { writePersonaFile } from "../utils/yaml.js";
+import { formatRubricProfile } from "../engine/rubric/scorer.js";
 import type { PersonaFile } from "../schema/persona.js";
-import type { EngineState } from "../engine/engine.js";
+import { createClient } from "../llm/client.js";
+import { extractSignals, extractPurpose, generateConversationalQuestion } from "../llm/discovery-llm.js";
+import { generateSection } from "../llm/population-llm.js";
+import { hasSignalSufficiency, getMissingSignals, QUESTION_BANK } from "../engine/discovery/discovery.js";
+import { evaluateInference } from "../engine/inference/inference.js";
+import { createInterface } from "node:readline/promises";
 
 /**
  * CREATE Command
  *
  * Guided persona creation from scratch.
- * In the full implementation, this drives an interactive terminal session
- * with the discovery state machine and population pipeline.
- *
- * For the prototype, this demonstrates the engine flow and generates
- * an example persona file.
+ * Interactive mode drives the full discovery → population → review pipeline
+ * using the Anthropic SDK. Non-interactive mode generates an example persona.
  */
 
 interface CreateOptions {
@@ -33,19 +41,239 @@ export async function createCommand(options: CreateOptions): Promise<void> {
     return;
   }
 
-  // Interactive mode — demonstrate the engine flow
-  const state = createEngineState();
-  const action = getNextAction(state);
+  await createInteractive(options.output);
+}
 
-  console.log("Discovery phase:");
-  console.log(`  Next action: ${action.type}`);
-  console.log(`  Payload: ${JSON.stringify(action.payload, null, 2)}`);
-  console.log(
-    "\nFull interactive mode requires the Anthropic SDK integration."
-  );
-  console.log(
-    "Use --non-interactive to generate an example persona file.\n"
-  );
+/**
+ * Interactive mode — full LLM-driven persona creation.
+ */
+async function createInteractive(outputPath: string): Promise<void> {
+  const rl = createInterface({ input: process.stdin, output: process.stdout });
+  let client: ReturnType<typeof createClient>;
+
+  try {
+    client = createClient();
+  } catch {
+    console.error("Failed to initialise Anthropic client.");
+    console.error("Ensure ANTHROPIC_API_KEY is set in your environment.");
+    console.error("Use --non-interactive to generate an example persona without an API key.\n");
+    rl.close();
+    return;
+  }
+
+  let state = createEngineState();
+
+  // Phase 1: Discovery
+  console.log("═══ DISCOVERY PHASE ═══");
+  console.log("I'll ask a series of questions to understand the persona you want to create.\n");
+
+  // Step 1: Get initial purpose
+  const purposeInput = await rl.question("Describe the persona you want to create — what should it do in a panel?\n> ");
+  if (!purposeInput.trim()) {
+    console.log("No input provided. Exiting.");
+    rl.close();
+    return;
+  }
+
+  try {
+    const purposeResult = await extractPurpose(client, purposeInput);
+    state.discovery.persona_purpose = purposeResult.purpose;
+    state.discovery.persona_context = purposeResult.context;
+    state.discovery.phase = "gathering";
+    console.log(`\nUnderstood. Purpose: ${purposeResult.purpose}\n`);
+  } catch (err) {
+    console.error(`Failed to extract purpose: ${String(err)}`);
+    console.log("Falling back to direct input as purpose.\n");
+    state.discovery.persona_purpose = purposeInput;
+    state.discovery.phase = "gathering";
+  }
+
+  // Step 2: Ask discovery questions until sufficient
+  let questionIndex = 0;
+  while (!hasSignalSufficiency(state.discovery) && questionIndex < QUESTION_BANK.length) {
+    const missing = getMissingSignals(state.discovery);
+    const nextQuestion = QUESTION_BANK.find(
+      (q) =>
+        q.targets.some((t) => missing.includes(t)) &&
+        !state.discovery.questions_asked.includes(q.id)
+    );
+
+    if (!nextQuestion) break;
+
+    // Generate a conversational version of the question
+    let questionText: string;
+    try {
+      questionText = await generateConversationalQuestion(client, nextQuestion, state.discovery);
+    } catch {
+      questionText = nextQuestion.text;
+    }
+
+    if (nextQuestion.options) {
+      console.log(questionText);
+      for (let i = 0; i < nextQuestion.options.length; i++) {
+        console.log(`  ${i + 1}. ${nextQuestion.options[i]}`);
+      }
+    } else if (nextQuestion.spectrum_anchors) {
+      console.log(questionText);
+      console.log(`  Low: ${nextQuestion.spectrum_anchors.low}`);
+      console.log(`  High: ${nextQuestion.spectrum_anchors.high}`);
+    } else {
+      console.log(questionText);
+    }
+
+    const answer = await rl.question("> ");
+    if (!answer.trim()) {
+      questionIndex++;
+      continue;
+    }
+
+    state.discovery.questions_asked.push(nextQuestion.id);
+
+    try {
+      const signals = await extractSignals(client, nextQuestion, answer);
+      state.discovery.signals.push(...signals);
+      console.log(`  ✓ Extracted ${signals.length} signal(s)\n`);
+    } catch (err) {
+      console.log(`  Could not extract signals: ${String(err)}\n`);
+    }
+
+    questionIndex++;
+  }
+
+  state.discovery.phase = "sufficient";
+  console.log(`\nDiscovery complete. ${state.discovery.signals.length} signal(s) gathered from ${state.discovery.questions_asked.length} question(s).\n`);
+
+  // Phase 2: Population
+  console.log("═══ POPULATION PHASE ═══");
+  console.log("Generating persona sections from discovery signals...\n");
+
+  state = transitionToPopulation(state);
+
+  while (state.pipeline && !isPipelineComplete(state.pipeline)) {
+    const section = getCurrentSection(state.pipeline);
+    if (!section) break;
+
+    console.log(`Generating: ${section}...`);
+
+    const inference = evaluateInference(section, state.pipeline);
+    let userInput: string | undefined;
+
+    // For sections that must be asked, prompt the user
+    if (!inference.can_infer && (section === "boundaries" || section === "purpose")) {
+      console.log(`  This section requires your input: ${inference.justification}`);
+      userInput = await rl.question(`  Any specific requirements for ${section}? (press Enter to let the engine decide)\n  > `);
+      if (!userInput.trim()) userInput = undefined;
+    }
+
+    try {
+      const sectionData = await generateSection(client, section, state.pipeline, userInput);
+
+      // Handle optional sections which return multiple sub-sections
+      if (section === "optional" && typeof sectionData === "object" && sectionData !== null) {
+        const optionalData = sectionData as Record<string, unknown>;
+        if (optionalData.communication) {
+          state.pipeline.partial_persona.communication = optionalData.communication as PersonaFile["communication"];
+        }
+        if (optionalData.invocation) {
+          state.pipeline.partial_persona.invocation = optionalData.invocation as PersonaFile["invocation"];
+        }
+        if (optionalData.bio) {
+          state.pipeline.partial_persona.bio = optionalData.bio as PersonaFile["bio"];
+        }
+      }
+
+      state.pipeline = recordPopulation(
+        state.pipeline,
+        section,
+        inference.can_infer ? "inference" : "direct_input",
+        sectionData,
+        {
+          confidence: inference.confidence,
+          source_signals: inference.supporting_signals.map((s) => s.signal),
+          inference_justification: inference.can_infer ? inference.justification : undefined,
+        }
+      );
+
+      state.pipeline = advanceSection(state.pipeline);
+      console.log(`  ✓ ${section} generated\n`);
+    } catch (err) {
+      console.error(`  ✗ Failed to generate ${section}: ${String(err)}`);
+      // Advance past the failed section to avoid infinite loops
+      state.pipeline = advanceSection(state.pipeline);
+      console.log(`  Skipping ${section}. You can refine it later.\n`);
+    }
+  }
+
+  // Phase 3: Review and finalise
+  console.log("═══ REVIEW PHASE ═══\n");
+
+  state = transitionToReview(state);
+
+  const partial = state.pipeline?.partial_persona;
+  if (!partial?.purpose || !partial?.panel_role || !partial?.rubric || !partial?.reasoning || !partial?.interaction || !partial?.boundaries) {
+    console.error("Persona generation incomplete — missing required sections.");
+    console.log("Use 'persona-x refine' to complete the missing sections.\n");
+    rl.close();
+    return;
+  }
+
+  const now = new Date().toISOString().split("T")[0]!;
+
+  // Prompt for persona name
+  const nameInput = await rl.question("What should this persona be named?\n> ");
+  const personaName = nameInput.trim() || "Generated Persona";
+
+  const persona: PersonaFile = {
+    metadata: {
+      name: personaName,
+      type: "designed",
+      owner: "Persona-x CLI",
+      version: "1.0.0",
+      last_updated: now,
+      audience: "Panel tools, orchestration agents",
+    },
+    purpose: partial.purpose,
+    bio: partial.bio ?? {
+      background: "Generated by Persona-x interactive creation flow.",
+      perspective_origin: "Perspective shaped by discovery signals gathered during creation.",
+    },
+    panel_role: partial.panel_role,
+    rubric: partial.rubric,
+    reasoning: partial.reasoning,
+    interaction: partial.interaction,
+    boundaries: partial.boundaries,
+    invocation: partial.invocation ?? {
+      include_when: ["When this persona's functional contribution is needed"],
+      exclude_when: ["When the topic is outside this persona's domain"],
+    },
+    provenance: {
+      created_by: "Persona-x CLI (interactive mode)",
+      history: [
+        {
+          version: "1.0.0",
+          date: now,
+          author: "Persona-x CLI",
+          changes: ["Initial persona creation via interactive discovery"],
+        },
+      ],
+    },
+  };
+
+  if (partial.communication) {
+    persona.communication = partial.communication;
+  }
+
+  // Show rubric summary
+  console.log(`\n${formatRubricProfile(persona.rubric)}`);
+
+  await writePersonaFile(outputPath, persona);
+  console.log(`\nPersona file written to: ${outputPath}`);
+  console.log(`Persona: ${persona.metadata.name}`);
+  console.log(`Version: ${persona.metadata.version}`);
+  console.log(`\nUse 'persona-x validate ${outputPath}' to verify the file.`);
+  console.log(`Use 'persona-x refine ${outputPath}' to make targeted adjustments.`);
+
+  rl.close();
 }
 
 /**

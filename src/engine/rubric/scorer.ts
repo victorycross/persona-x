@@ -6,7 +6,6 @@ import type {
 import {
   RUBRIC_DIMENSIONS,
   RUBRIC_DIMENSION_LABELS,
-  RUBRIC_DIMENSION_DESCRIPTIONS,
   validateRubricCoherence,
 } from "../../schema/rubric.js";
 import type { ExtractedSignal } from "../discovery/discovery.js";

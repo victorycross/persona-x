@@ -10,13 +10,10 @@ import {
 import {
   createPipelineState,
   getCurrentSection,
-  advanceSection,
-  recordPopulation,
-  isPipelineComplete,
   generateBuildTrace,
 } from "./population/pipeline.js";
 import { evaluateInference } from "./inference/inference.js";
-import { buildRubricProfile, formatRubricProfile } from "./rubric/scorer.js";
+import { formatRubricProfile } from "./rubric/scorer.js";
 
 /**
  * Persona Engine — Main Orchestrator

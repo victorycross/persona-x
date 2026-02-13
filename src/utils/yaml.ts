@@ -52,7 +52,7 @@ export function yamlToPersona(yamlContent: string): {
 
   const errors =
     result.errors?.issues.map(
-      (issue) => `${issue.path.join(".")}: ${issue.message}`
+      (issue: { path: (string | number)[]; message: string }) => `${issue.path.join(".")}: ${issue.message}`
     ) ?? ["Unknown validation error"];
 
   return { success: false, errors };

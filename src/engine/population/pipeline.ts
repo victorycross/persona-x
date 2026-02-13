@@ -1,7 +1,6 @@
 import type {
   PersonaFile,
   PersonaPurpose,
-  PersonaBio,
   PanelRole,
   ReasoningTendencies,
   InteractionStyle,

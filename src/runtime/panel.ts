@@ -1,10 +1,9 @@
 import type {
   LoadedPersona,
   PanelConfig,
-  PanelMessage,
   PanelRound,
 } from "./interface.js";
-import { generatePersonaSystemPrompt, selectPersonasForTopic } from "./interface.js";
+import { generatePersonaSystemPrompt } from "./interface.js";
 
 /**
  * Panel Simulator

@@ -1,5 +1,5 @@
 import type { PersonaFile } from "../schema/persona.js";
-import type { RubricProfile, RubricDimensionName } from "../schema/rubric.js";
+import type { RubricDimensionName } from "../schema/rubric.js";
 
 /**
  * Panel Runtime Interface
@@ -152,7 +152,7 @@ export function generatePersonaSystemPrompt(persona: PersonaFile): string {
  * Uses invocation cues to filter.
  */
 export function selectPersonasForTopic(
-  topic: string,
+  _topic: string,
   personas: LoadedPersona[]
 ): LoadedPersona[] {
   // In a full implementation, this would use NLP to match topic against

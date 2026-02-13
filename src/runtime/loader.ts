@@ -1,8 +1,7 @@
 import { parse } from "yaml";
 import { readFile } from "node:fs/promises";
-import { PersonaFileSchema, validatePersonaFile } from "../schema/persona.js";
+import { validatePersonaFile } from "../schema/persona.js";
 import { validateRubricCoherence } from "../schema/rubric.js";
-import type { PersonaFile } from "../schema/persona.js";
 import type { LoadedPersona } from "./interface.js";
 
 /**
@@ -26,7 +25,6 @@ export interface LoadResult {
 export async function loadPersonaFromFile(
   filePath: string
 ): Promise<LoadResult> {
-  const errors: string[] = [];
   const warnings: string[] = [];
 
   // Read file
@@ -55,7 +53,7 @@ export async function loadPersonaFromFile(
   const validation = validatePersonaFile(parsed);
   if (!validation.success || !validation.data) {
     const schemaErrors = validation.errors?.issues.map(
-      (issue) => `${issue.path.join(".")}: ${issue.message}`
+      (issue: { path: (string | number)[]; message: string }) => `${issue.path.join(".")}: ${issue.message}`
     ) ?? ["Unknown validation error"];
     return { success: false, errors: schemaErrors };
   }
