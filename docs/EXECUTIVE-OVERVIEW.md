@@ -57,12 +57,11 @@ The system operates in three stages: **Create**, **Store**, and **Run**.
 
 ### Stage 1 — Create a Persona
 
-A guided process called APOCA-P (Assistant Persona Oriented Creator Assistant) walks
-the user through a focused set of questions designed to extract judgement and behaviour
-signals. The questions are deliberately minimal — framed as decisions, comparisons, and
-spectrum choices rather than long interviews.
+A guided creation engine walks the user through a focused set of questions designed to
+extract judgement and behaviour signals. The questions are deliberately minimal — framed
+as decisions, comparisons, and spectrum choices rather than long interviews.
 
-From these signals, APOCA-P builds a persona file with the following structure:
+From these signals, the engine builds a persona file with the following structure:
 
 | Component | What It Captures |
 |---|---|
@@ -212,7 +211,7 @@ This is fundamentally different from a black-box AI interaction.
                     └────────┬─────────┘
                              │
                     ┌────────▼─────────┐
-                    │  APOCA-P Engine  │
+                    │  Creation Engine │
                     │  (CREATE/REFINE) │
                     └────────┬─────────┘
                              │
@@ -255,7 +254,7 @@ This is fundamentally different from a black-box AI interaction.
 - CLI tools for creating, refining, and validating personas
 - Panel runtime with persona loading, speaking order, and prompt generation
 - Example persona (Risk-Aware Analyst) demonstrating the full format
-- Improved framework specification separating persona creation from voice profiling
+- Clear separation between persona creation and voice profiling
 
 ### Recommended Next Steps
 
@@ -269,4 +268,4 @@ This is fundamentally different from a black-box AI interaction.
 
 ---
 
-*Built with the APOCA-P framework. Persona-x is a Brightpath Technologies project.*
+*Persona-x is a Brightpath Technologies project.*
