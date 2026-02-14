@@ -1,0 +1,77 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --board-bg: #0c0c0e;
+  --board-surface: #141416;
+  --board-surface-raised: #1a1a1e;
+  --board-text: #e8e6e3;
+  --board-text-secondary: #9a9693;
+  --board-text-tertiary: #5c5955;
+  --board-accent: #c8956c;
+  --board-border: rgba(255, 255, 255, 0.06);
+  --board-border-hover: rgba(255, 255, 255, 0.12);
+}
+
+body {
+  background: var(--board-bg);
+  color: var(--board-text);
+}
+
+/* Grain texture overlay */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--board-bg);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+}
+
+/* Streaming cursor animation */
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.streaming-cursor::after {
+  content: "\25CA";
+  animation: blink 1s steps(1) infinite;
+  color: #c8956c;
+  margin-left: 2px;
+}
+
+/* Rubric bar animation */
+@keyframes growBar {
+  from { width: 0; }
+}
+
+.rubric-bar {
+  animation: growBar 0.6s ease-out;
+}
+
+/* Card hover utility */
+.card-hover {
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  border-color: var(--board-border-hover);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
