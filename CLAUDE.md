@@ -21,8 +21,20 @@ Persona-x/
 ├── package.json               # Dependencies and scripts
 ├── tsconfig.json              # TypeScript configuration
 ├── vitest.config.ts           # Test configuration
-├── specs/                     # Framework specification documents
+├── specs/                     # Core framework specification
 │   └── SPEC.md               # Persona-x specification
+├── docs/                      # Core framework documentation
+│   ├── EXECUTIVE-OVERVIEW.md  # Non-technical overview of Persona-x
+│   ├── DECISION-ENGINE.md     # Structured pipeline for evaluating opportunities
+│   ├── BUILD-PROMPT.md        # Technical implementation guidance
+│   ├── PERSONAL-USE-CASES.md  # 20 personal/life decision use cases
+│   ├── SMALL-BUSINESS-USE-CASES.md  # 20 small business use cases
+│   ├── GRC-USE-CASES.md       # 10 governance/risk/compliance use cases
+│   └── UNTAPPED-MARKETS.md    # 20 additional market categories
+├── solutions/                 # Derivative products built on Persona-x
+│   └── personal-board-of-directors/
+│       ├── BRD.md             # Business Requirements Document
+│       └── PRODUCT-SPEC.md    # Product Specification
 ├── src/
 │   ├── index.ts               # Library entry point (exports)
 │   ├── schema/                # Persona file schema & validation
@@ -58,6 +70,43 @@ Persona-x/
     ├── cli/                   # CLI integration tests
     └── runtime/               # Runtime tests
 ```
+
+## Solutions (Derivative Products)
+
+The `solutions/` directory contains derivative products and custom solutions built on the Persona-x framework. Each solution is a consumer-facing or market-specific application that consumes the core framework (persona schema, panel runtime, creation engine) without modifying it.
+
+### Directory Convention
+
+Each solution gets its own folder under `solutions/` containing at minimum:
+
+| File | Purpose |
+|---|---|
+| `BRD.md` | Business Requirements Document — market analysis, monetisation, go-to-market |
+| `PRODUCT-SPEC.md` | Product Specification — architecture, features, personas, user journeys, roadmap |
+
+Solutions may also include additional documentation, persona YAML files, or implementation code as needed.
+
+### Relationship to Core Framework
+
+```
+solutions/<solution-name>/     ← derivative product docs and assets
+    │
+    │ consumes
+    ▼
+specs/SPEC.md                  ← persona schema, rubric, panel runtime contract
+src/                           ← framework implementation
+docs/                          ← core framework research and use case analysis
+```
+
+- Solutions **consume** the framework — they do not modify `specs/`, `src/`, or `docs/`.
+- Core `docs/` contains framework-level research (use cases, market analysis, decision engine) that solutions may reference.
+- Persona YAML files created for a solution must validate against the schema in `src/schema/persona.ts`.
+
+### Current Solutions
+
+| Solution | Description | Status |
+|---|---|---|
+| **Personal Board of Directors** | Consumer subscription product — 8 pre-built advisor personas for career, life, and business decisions | BRD + Product Spec complete |
 
 ## Development Workflow
 
@@ -252,3 +301,5 @@ invocation:
 4. **Persona files are artefacts, not conversations.** Changes must be explicit, scoped, versioned, and traceable.
 5. **Inference is conservative.** When in doubt, ask. Only infer when multiple signals converge and consistency is maintained.
 6. **Australian English** is the spelling standard for all user-facing output.
+7. **Separate framework from solutions.** Core framework docs belong in `docs/` and `specs/`. Derivative product documentation (BRDs, product specs, solution-specific personas) belongs in `solutions/<solution-name>/`. Never place solution-specific content in the core directories.
+8. **Solutions consume, not modify.** Derivative products built on Persona-x must work within the framework's existing schema, rubric, and runtime contract. If a solution requires framework changes, those changes belong in `specs/` and `src/` as framework enhancements, not in the solution directory.
