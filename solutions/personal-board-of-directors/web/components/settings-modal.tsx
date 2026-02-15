@@ -14,7 +14,7 @@ export function SettingsModal() {
   const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const modalRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => setMounted(true), []);
 
@@ -23,7 +23,7 @@ export function SettingsModal() {
     triggerRef.current?.focus();
   }, []);
 
-  // Focus trap & Escape
+  // Close on Escape or click outside
   useEffect(() => {
     if (!open) return;
 
@@ -31,49 +31,37 @@ export function SettingsModal() {
       if (e.key === "Escape") {
         e.preventDefault();
         close();
-        return;
       }
-      if (e.key === "Tab" && modalRef.current) {
-        const focusable = modalRef.current.querySelectorAll<HTMLElement>(
-          'button, [role="radio"], [tabindex]:not([tabindex="-1"])'
-        );
-        if (focusable.length === 0) return;
-        const first = focusable[0];
-        const last = focusable[focusable.length - 1];
-        if (e.shiftKey && document.activeElement === first) {
-          e.preventDefault();
-          last.focus();
-        } else if (!e.shiftKey && document.activeElement === last) {
-          e.preventDefault();
-          first.focus();
-        }
+    }
+
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        panelRef.current &&
+        !panelRef.current.contains(e.target as Node) &&
+        triggerRef.current &&
+        !triggerRef.current.contains(e.target as Node)
+      ) {
+        close();
       }
     }
 
     document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, [open, close]);
 
-  // Auto-focus close button on open & lock body scroll
-  useEffect(() => {
-    if (!open) return;
-    const closeBtn = modalRef.current?.querySelector<HTMLElement>("button");
-    closeBtn?.focus();
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [open]);
-
   return (
-    <>
+    <div className="relative">
       <button
         ref={triggerRef}
-        onClick={() => setOpen(true)}
+        onClick={() => setOpen(!open)}
         aria-label="Settings"
+        aria-expanded={open}
         className="rounded-lg p-1.5 text-board-text-tertiary hover:text-board-text transition-colors"
       >
-        {/* Feather gear icon */}
         <svg
           width="18"
           height="18"
@@ -92,72 +80,34 @@ export function SettingsModal() {
 
       {open && (
         <div
-          className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 backdrop-blur-sm"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) close();
-          }}
+          ref={panelRef}
+          role="menu"
+          aria-label="Theme"
+          className="absolute right-0 top-full mt-2 z-[10000] w-44 rounded-lg border border-board-border bg-board-surface p-1.5 shadow-lg"
         >
-          <div
-            ref={modalRef}
-            role="dialog"
-            aria-modal="true"
-            aria-label="Settings"
-            className="w-full max-w-sm rounded-[16px] border border-board-border bg-board-surface p-6 shadow-xl mx-4"
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-serif text-board-text">Settings</h2>
+          {THEME_OPTIONS.map((opt) => {
+            const selected = mounted && theme === opt.value;
+            return (
               <button
-                onClick={close}
-                aria-label="Close settings"
-                className="rounded-lg p-1 text-board-text-tertiary hover:text-board-text transition-colors"
+                key={opt.value}
+                role="menuitemradio"
+                aria-checked={selected}
+                onClick={() => {
+                  setTheme(opt.value);
+                  close();
+                }}
+                className={`w-full rounded-md px-3 py-2 text-left text-sm transition-colors ${
+                  selected
+                    ? "bg-board-accent/10 text-board-accent font-medium"
+                    : "text-board-text-secondary hover:bg-board-bg hover:text-board-text"
+                }`}
               >
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
+                {opt.label}
               </button>
-            </div>
-
-            {/* Theme picker */}
-            <fieldset>
-              <legend className="text-xs uppercase tracking-widest text-board-text-tertiary mb-3 font-sans">
-                Theme
-              </legend>
-              <div role="radiogroup" aria-label="Theme" className="flex gap-2">
-                {THEME_OPTIONS.map((opt) => {
-                  const selected = mounted && theme === opt.value;
-                  return (
-                    <button
-                      key={opt.value}
-                      role="radio"
-                      aria-checked={selected}
-                      onClick={() => setTheme(opt.value)}
-                      className={`flex-1 rounded-[10px] border px-3 py-2.5 text-sm font-medium transition-colors ${
-                        selected
-                          ? "border-board-accent bg-board-accent/10 text-board-accent"
-                          : "border-board-border bg-board-bg text-board-text-secondary hover:border-board-border-hover hover:text-board-text"
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </fieldset>
-          </div>
+            );
+          })}
         </div>
       )}
-    </>
+    </div>
   );
 }
