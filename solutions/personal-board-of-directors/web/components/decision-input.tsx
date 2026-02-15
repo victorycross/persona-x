@@ -42,7 +42,7 @@ export function DecisionInput() {
         <button
           type="submit"
           disabled={!decision.trim()}
-          className="w-full rounded-[12px] bg-board-accent px-6 py-3.5 text-sm font-semibold text-board-bg transition-colors hover:bg-board-accent/90 disabled:opacity-50 disabled:bg-board-surface-raised disabled:text-board-text-secondary disabled:cursor-not-allowed"
+          className="w-full rounded-[12px] bg-board-accent px-6 py-3.5 text-sm font-semibold text-board-accent-contrast transition-colors hover:bg-board-accent/90 disabled:opacity-50 disabled:bg-board-surface-raised disabled:text-board-text-secondary disabled:cursor-not-allowed"
         >
           Continue
         </button>

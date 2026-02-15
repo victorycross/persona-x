@@ -31,7 +31,7 @@ function BoardFlow() {
 
       {/* Error display */}
       {sessionError && (
-        <div role="alert" className="mb-6 rounded-[12px] border border-rose-500/30 bg-rose-500/10 px-5 py-4 text-sm text-rose-300">
+        <div role="alert" className="mb-6 rounded-[12px] border border-rose-500/30 bg-rose-500/10 px-5 py-4 text-sm text-rose-600 dark:text-rose-300">
           {sessionError}
         </div>
       )}

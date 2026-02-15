@@ -6,20 +6,22 @@ const config: Config = {
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
     "./lib/**/*.{js,ts,jsx,tsx,mdx}",
   ],
+  darkMode: "class",
   theme: {
     extend: {
       colors: {
         board: {
-          bg: "#0c0c0e",
-          surface: "#141416",
-          "surface-raised": "#1a1a1e",
-          text: "#e8e6e3",
-          "text-secondary": "#9a9693",
-          "text-tertiary": "#8a8580",
-          accent: "#c8956c",
-          "accent-glow": "rgba(200,149,108,0.08)",
-          border: "rgba(255,255,255,0.06)",
-          "border-hover": "rgba(255,255,255,0.12)",
+          bg: "rgb(var(--board-bg) / <alpha-value>)",
+          surface: "rgb(var(--board-surface) / <alpha-value>)",
+          "surface-raised": "rgb(var(--board-surface-raised) / <alpha-value>)",
+          text: "rgb(var(--board-text) / <alpha-value>)",
+          "text-secondary": "rgb(var(--board-text-secondary) / <alpha-value>)",
+          "text-tertiary": "rgb(var(--board-text-tertiary) / <alpha-value>)",
+          accent: "rgb(var(--board-accent) / <alpha-value>)",
+          "accent-contrast": "rgb(var(--board-accent-contrast) / <alpha-value>)",
+          "accent-glow": "rgb(var(--board-accent) / 0.08)",
+          border: "var(--board-border)",
+          "border-hover": "var(--board-border-hover)",
         },
       },
       fontFamily: {

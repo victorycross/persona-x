@@ -5,9 +5,9 @@ import type { BoardBrief, PersonaProfile, PersonaResponse } from "@/lib/types";
 import { ROLE_BADGE_COLORS, DEFAULT_BADGE_COLOR } from "@/lib/constants";
 
 const CONFIDENCE_COLORS = {
-  high: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
+  high: "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
   moderate: "text-board-accent bg-board-accent/10 border-board-accent/20",
-  low: "text-rose-400 bg-rose-500/10 border-rose-500/20",
+  low: "text-rose-600 dark:text-rose-400 bg-rose-500/10 border-rose-500/20",
 };
 
 const STRENGTH_LABELS = {

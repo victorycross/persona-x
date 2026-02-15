@@ -201,7 +201,7 @@ export function PersonaPage() {
             <button
               onClick={handleSubmitChallenge}
               disabled={!challengeText.trim()}
-              className="rounded-[10px] bg-board-accent px-4 py-2 text-xs font-semibold text-board-bg transition-colors hover:bg-board-accent/90 disabled:opacity-50 disabled:bg-board-surface-raised disabled:text-board-text-secondary disabled:cursor-not-allowed"
+              className="rounded-[10px] bg-board-accent px-4 py-2 text-xs font-semibold text-board-accent-contrast transition-colors hover:bg-board-accent/90 disabled:opacity-50 disabled:bg-board-surface-raised disabled:text-board-text-secondary disabled:cursor-not-allowed"
             >
               Challenge
             </button>
@@ -231,7 +231,7 @@ export function PersonaPage() {
         <button
           onClick={handleNext}
           disabled={nextDisabled}
-          className="rounded-[12px] bg-board-accent px-6 py-2.5 text-sm font-semibold text-board-bg transition-colors hover:bg-board-accent/90 disabled:opacity-50 disabled:bg-board-surface-raised disabled:text-board-text-secondary disabled:cursor-not-allowed"
+          className="rounded-[12px] bg-board-accent px-6 py-2.5 text-sm font-semibold text-board-accent-contrast transition-colors hover:bg-board-accent/90 disabled:opacity-50 disabled:bg-board-surface-raised disabled:text-board-text-secondary disabled:cursor-not-allowed"
         >
           {nextLabel} <span aria-hidden="true">&rarr;</span>
         </button>

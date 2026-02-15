@@ -57,7 +57,7 @@ export function ProbingQuestions() {
         </p>
         <button
           onClick={handleSubmit}
-          className="mt-4 rounded-[12px] bg-board-accent px-8 py-3 text-sm font-semibold text-board-bg transition-colors hover:bg-board-accent/90"
+          className="mt-4 rounded-[12px] bg-board-accent px-8 py-3 text-sm font-semibold text-board-accent-contrast transition-colors hover:bg-board-accent/90"
         >
           Convene the Board
         </button>
@@ -115,7 +115,7 @@ export function ProbingQuestions() {
           </button>
           <button
             type="submit"
-            className="rounded-[12px] bg-board-accent px-8 py-3 text-sm font-semibold text-board-bg transition-colors hover:bg-board-accent/90"
+            className="rounded-[12px] bg-board-accent px-8 py-3 text-sm font-semibold text-board-accent-contrast transition-colors hover:bg-board-accent/90"
           >
             Convene the Board
           </button>
