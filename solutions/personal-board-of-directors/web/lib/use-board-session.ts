@@ -75,7 +75,12 @@ export function useBoardSession() {
           const dataMatch = line.match(/^data: (.+)$/m);
           if (!dataMatch) continue;
 
-          const event: BoardSessionEvent = JSON.parse(dataMatch[1]);
+          let event: BoardSessionEvent;
+          try {
+            event = JSON.parse(dataMatch[1]);
+          } catch {
+            continue;
+          }
           handleEvent(event, setState);
         }
       }
@@ -84,8 +89,12 @@ export function useBoardSession() {
       if (buffer.trim()) {
         const dataMatch = buffer.match(/^data: (.+)$/m);
         if (dataMatch) {
-          const event: BoardSessionEvent = JSON.parse(dataMatch[1]);
-          handleEvent(event, setState);
+          try {
+            const event: BoardSessionEvent = JSON.parse(dataMatch[1]);
+            handleEvent(event, setState);
+          } catch {
+            // Truncated SSE frame — ignore
+          }
         }
       }
     } catch (err) {

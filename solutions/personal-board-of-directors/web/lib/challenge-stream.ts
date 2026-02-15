@@ -24,6 +24,8 @@ export function runChallengeStream(params: ChallengeStreamParams): ReadableStrea
   const { personaId, decision, initialResponse, priorChallenges, challengeText } = params;
   const encoder = new TextEncoder();
 
+  let activeStream: { abort(): void } | null = null;
+
   return new ReadableStream({
     async start(controller) {
       function emit(event: ChallengeStreamEvent) {
@@ -86,6 +88,7 @@ export function runChallengeStream(params: ChallengeStreamParams): ReadableStrea
           system: systemPrompt,
           messages,
         });
+        activeStream = stream;
 
         for await (const event of stream) {
           if (
@@ -96,15 +99,25 @@ export function runChallengeStream(params: ChallengeStreamParams): ReadableStrea
           }
         }
 
+        activeStream = null;
         emit({ type: "challenge_reply_complete" });
         controller.close();
       } catch (err) {
+        activeStream = null;
+        if ((err as Error).name === "APIUserAbortError") {
+          controller.close();
+          return;
+        }
         emit({
           type: "error",
           message: err instanceof Error ? err.message : String(err),
         });
         controller.close();
       }
+    },
+    cancel() {
+      activeStream?.abort();
+      activeStream = null;
     },
   });
 }

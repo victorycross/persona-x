@@ -32,6 +32,34 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  if (decision.length > 5000) {
+    return NextResponse.json(
+      { error: "Decision text must be under 5000 characters" },
+      { status: 400 }
+    );
+  }
+
+  if (challengeText.length > 2000) {
+    return NextResponse.json(
+      { error: "Challenge text must be under 2000 characters" },
+      { status: 400 }
+    );
+  }
+
+  if (initialResponse.length > 10000) {
+    return NextResponse.json(
+      { error: "Initial response too large" },
+      { status: 400 }
+    );
+  }
+
+  if ((priorChallenges?.length ?? 0) > 10) {
+    return NextResponse.json(
+      { error: "Too many prior challenges (max 10)" },
+      { status: 400 }
+    );
+  }
+
   const stream = runChallengeStream({
     personaId,
     decision,

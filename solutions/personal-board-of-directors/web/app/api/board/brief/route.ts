@@ -27,6 +27,36 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  if (decision.length > 5000) {
+    return NextResponse.json(
+      { error: "Decision text must be under 5000 characters" },
+      { status: 400 }
+    );
+  }
+
+  if (responses.length > 20) {
+    return NextResponse.json(
+      { error: "Too many responses (max 20)" },
+      { status: 400 }
+    );
+  }
+
+  // Validate individual response sizes
+  for (const r of responses) {
+    if ((r.content?.length ?? 0) > 10000) {
+      return NextResponse.json(
+        { error: "Individual response content too large" },
+        { status: 400 }
+      );
+    }
+    if ((r.challenges?.length ?? 0) > 10) {
+      return NextResponse.json(
+        { error: "Too many challenges per response (max 10)" },
+        { status: 400 }
+      );
+    }
+  }
+
   try {
     const client = createClient();
     const brief = await generateBoardBrief(client, decision, responses);

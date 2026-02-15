@@ -69,10 +69,13 @@ Keep your response focused and under 400 words.`;
  */
 export function runBoardSession(decision: string): ReadableStream<Uint8Array> {
   const encoder = new TextEncoder();
+  let activeStream: { abort(): void } | null = null;
+  let cancelled = false;
 
   return new ReadableStream({
     async start(controller) {
       function emit(event: BoardSessionEvent) {
+        if (cancelled) return;
         const data = `data: ${JSON.stringify(event)}\n\n`;
         controller.enqueue(encoder.encode(data));
       }
@@ -96,6 +99,8 @@ export function runBoardSession(decision: string): ReadableStream<Uint8Array> {
 
         // Stream each persona's response sequentially
         for (const persona of ordered) {
+          if (cancelled) break;
+
           const systemPrompt = session.system_prompts.get(persona.id);
           if (!systemPrompt) continue;
 
@@ -118,8 +123,10 @@ export function runBoardSession(decision: string): ReadableStream<Uint8Array> {
               system: systemPrompt,
               messages: [{ role: "user", content: userMessage }],
             });
+            activeStream = stream;
 
             for await (const event of stream) {
+              if (cancelled) break;
               if (
                 event.type === "content_block_delta" &&
                 event.delta.type === "text_delta"
@@ -129,7 +136,11 @@ export function runBoardSession(decision: string): ReadableStream<Uint8Array> {
                 emit({ type: "persona_token", personaId: persona.id, token });
               }
             }
+
+            activeStream = null;
           } catch (err) {
+            activeStream = null;
+            if (cancelled) break;
             fullContent = `[Error generating response: ${err instanceof Error ? err.message : String(err)}]`;
             emit({ type: "persona_token", personaId: persona.id, token: fullContent });
           }
@@ -143,6 +154,11 @@ export function runBoardSession(decision: string): ReadableStream<Uint8Array> {
           });
 
           emit({ type: "persona_complete", personaId: persona.id });
+        }
+
+        if (cancelled) {
+          controller.close();
+          return;
         }
 
         // Generate Board Brief
@@ -161,12 +177,21 @@ export function runBoardSession(decision: string): ReadableStream<Uint8Array> {
         emit({ type: "session_complete" });
         controller.close();
       } catch (err) {
+        if (cancelled) {
+          controller.close();
+          return;
+        }
         emit({
           type: "error",
           message: err instanceof Error ? err.message : String(err),
         });
         controller.close();
       }
+    },
+    cancel() {
+      cancelled = true;
+      activeStream?.abort();
+      activeStream = null;
     },
   });
 }

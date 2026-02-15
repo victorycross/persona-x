@@ -83,6 +83,7 @@ export function BoardProvider({ children }: { children: ReactNode }) {
   // Challenge state
   const [challengeStatus, setChallengeStatus] = useState<ChallengeStatus>("idle");
   const challengeAbortRef = useRef<AbortController | null>(null);
+  const challengePersonaRef = useRef<string | null>(null);
 
   // Brief regeneration state
   const [briefStale, setBriefStale] = useState(false);
@@ -136,12 +137,34 @@ export function BoardProvider({ children }: { children: ReactNode }) {
     setProbingAnswers((prev) => ({ ...prev, [id]: value }));
   }, []);
 
-  // Abort any in-flight challenge
+  // Abort any in-flight challenge and remove the incomplete exchange
   const abortChallenge = useCallback(() => {
-    challengeAbortRef.current?.abort();
-    challengeAbortRef.current = null;
+    if (challengeAbortRef.current) {
+      challengeAbortRef.current.abort();
+      challengeAbortRef.current = null;
+      // Remove the dangling incomplete exchange
+      const personaId = challengePersonaRef.current;
+      if (personaId) {
+        updateResponse(personaId, (r) => ({
+          ...r,
+          challenges: r.challenges.filter((c) => c.isReplyComplete),
+        }));
+        challengePersonaRef.current = null;
+      }
+    }
     setChallengeStatus("idle");
-  }, []);
+  }, [updateResponse]);
+
+  // Reset challenge/brief state when a new session starts
+  useEffect(() => {
+    if (status === "loading") {
+      abortChallenge();
+      setChallengeStatus("idle");
+      setBriefStale(false);
+      setBriefLoading(false);
+      setRegeneratedBrief(null);
+    }
+  }, [status, abortChallenge]);
 
   // Start a challenge exchange
   const startChallenge = useCallback(
@@ -151,6 +174,7 @@ export function BoardProvider({ children }: { children: ReactNode }) {
 
       const abortController = new AbortController();
       challengeAbortRef.current = abortController;
+      challengePersonaRef.current = personaId;
 
       // Find the current response to get context
       const response = responses.find((r) => r.personaId === personaId);
@@ -209,7 +233,12 @@ export function BoardProvider({ children }: { children: ReactNode }) {
               const dataMatch = line.match(/^data: (.+)$/m);
               if (!dataMatch) continue;
 
-              const event = JSON.parse(dataMatch[1]);
+              let event;
+              try {
+                event = JSON.parse(dataMatch[1]);
+              } catch {
+                continue;
+              }
 
               if (event.type === "challenge_reply_token") {
                 updateResponse(personaId, (r) => {
@@ -231,6 +260,7 @@ export function BoardProvider({ children }: { children: ReactNode }) {
                   };
                   return { ...r, challenges };
                 });
+                challengePersonaRef.current = null;
                 setChallengeStatus("idle");
                 setBriefStale(true);
               } else if (event.type === "error") {
@@ -244,6 +274,7 @@ export function BoardProvider({ children }: { children: ReactNode }) {
                   };
                   return { ...r, challenges };
                 });
+                challengePersonaRef.current = null;
                 setChallengeStatus("idle");
               }
             }
