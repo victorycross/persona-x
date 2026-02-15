@@ -1,18 +1,11 @@
 import type { Metadata } from "next";
-import { Instrument_Serif, DM_Sans } from "next/font/google";
+import { Inter } from "next/font/google";
 import { PERSONA_COUNT } from "@/lib/personas";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SettingsModal } from "@/components/settings-modal";
 import "./globals.css";
 
-const instrumentSerif = Instrument_Serif({
-  weight: "400",
-  subsets: ["latin"],
-  variable: "--font-serif",
-  display: "swap",
-});
-
-const dmSans = DM_Sans({
+const inter = Inter({
   subsets: ["latin"],
   variable: "--font-sans",
   display: "swap",
@@ -31,7 +24,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${instrumentSerif.variable} ${dmSans.variable}`}
+      className={inter.variable}
       suppressHydrationWarning
     >
       <body className="min-h-screen bg-board-bg text-board-text font-sans antialiased">
@@ -42,18 +35,18 @@ export default function RootLayout({
           >
             Skip to main content
           </a>
-          <header className="border-b border-board-border px-6 py-5">
+          <header className="bg-board-surface/95 backdrop-blur-md border-b border-board-border shadow-sm px-6 py-5">
             <div className="mx-auto max-w-3xl flex items-center justify-between">
               <div>
-                <h1 className="text-xl font-serif text-board-text tracking-tight">
+                <h1 className="text-xl font-bold text-board-text tracking-tight">
                   Personal Board of Directors
                 </h1>
-                <p className="text-xs text-board-text-secondary mt-0.5 font-sans">
+                <p className="text-xs text-board-text-secondary mt-0.5">
                   Structured multi-perspective counsel for important decisions
                 </p>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-xs text-board-text-tertiary font-sans">
+                <span className="text-xs text-board-text-tertiary">
                   {PERSONA_COUNT} advisors
                 </span>
                 <SettingsModal />

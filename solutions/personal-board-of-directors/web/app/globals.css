@@ -2,40 +2,40 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Light theme (default) ─────────────────────────────── */
+/* ── Light theme ───────────────────────────────────────── */
 :root {
-  --board-bg: 250 248 245;
+  --board-bg: 249 250 251;
   --board-surface: 255 255 255;
-  --board-surface-raised: 245 242 238;
-  --board-text: 28 25 23;
-  --board-text-secondary: 100 95 90;
-  --board-text-tertiary: 120 113 108;
-  --board-accent: 200 149 108;
-  --board-accent-contrast: 28 25 23;
-  --board-border: rgba(0, 0, 0, 0.08);
-  --board-border-hover: rgba(0, 0, 0, 0.14);
-  --board-scrollbar-track: 250 248 245;
+  --board-surface-raised: 243 244 246;
+  --board-text: 17 24 39;
+  --board-text-secondary: 75 85 99;
+  --board-text-tertiary: 156 163 175;
+  --board-accent: 37 99 235;
+  --board-accent-contrast: 255 255 255;
+  --board-border: rgba(0, 0, 0, 0.10);
+  --board-border-hover: rgba(0, 0, 0, 0.18);
+  --board-scrollbar-track: 249 250 251;
   --board-scrollbar-thumb: rgba(0, 0, 0, 0.08);
   --board-shadow-hover: rgba(0, 0, 0, 0.08);
-  --board-grain-opacity: 0.02;
+  --board-grain-opacity: 0.015;
 }
 
 /* ── Dark theme ────────────────────────────────────────── */
 .dark {
-  --board-bg: 12 12 14;
-  --board-surface: 20 20 22;
-  --board-surface-raised: 26 26 30;
-  --board-text: 232 230 227;
-  --board-text-secondary: 154 150 147;
-  --board-text-tertiary: 138 133 128;
-  --board-accent: 200 149 108;
-  --board-accent-contrast: 12 12 14;
-  --board-border: rgba(255, 255, 255, 0.06);
-  --board-border-hover: rgba(255, 255, 255, 0.12);
-  --board-scrollbar-track: 12 12 14;
+  --board-bg: 3 7 18;
+  --board-surface: 17 24 39;
+  --board-surface-raised: 31 41 55;
+  --board-text: 249 250 251;
+  --board-text-secondary: 156 163 175;
+  --board-text-tertiary: 107 114 128;
+  --board-accent: 59 130 246;
+  --board-accent-contrast: 255 255 255;
+  --board-border: rgba(255, 255, 255, 0.10);
+  --board-border-hover: rgba(255, 255, 255, 0.18);
+  --board-scrollbar-track: 3 7 18;
   --board-scrollbar-thumb: rgba(255, 255, 255, 0.08);
-  --board-shadow-hover: rgba(0, 0, 0, 0.3);
-  --board-grain-opacity: 0.03;
+  --board-shadow-hover: rgba(0, 0, 0, 0.4);
+  --board-grain-opacity: 0.02;
 }
 
 body {

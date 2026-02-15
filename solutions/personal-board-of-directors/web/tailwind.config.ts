@@ -25,8 +25,8 @@ const config: Config = {
         },
       },
       fontFamily: {
-        serif: ["var(--font-serif)", "Instrument Serif", "Georgia", "serif"],
-        sans: ["var(--font-sans)", "DM Sans", "system-ui", "sans-serif"],
+        serif: ["var(--font-sans)", "Inter", "system-ui", "sans-serif"],
+        sans: ["var(--font-sans)", "Inter", "system-ui", "sans-serif"],
       },
       animation: {
         "fade-in": "fadeIn 0.4s ease-out",
