@@ -1,6 +1,7 @@
 import { createClient } from "@persona-x/llm/client.js";
 import { createPanelSession, determineSpeakingOrder } from "@persona-x/runtime/panel.js";
 import { loadBoardPersonas } from "./personas";
+import { LLM_MODEL } from "./constants";
 import type { ChallengeExchange } from "./types";
 
 interface ChallengeStreamParams {
@@ -82,7 +83,7 @@ export function runChallengeStream(params: ChallengeStreamParams): ReadableStrea
         messages.push({ role: "user", content: challengeText });
 
         const stream = client.messages.stream({
-          model: "claude-sonnet-4-20250514",
+          model: LLM_MODEL,
           max_tokens: 1024,
           temperature: 0.7,
           system: systemPrompt,

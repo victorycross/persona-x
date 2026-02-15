@@ -5,6 +5,7 @@ import type { RubricDimensionName } from "@persona-x/schema/rubric.js";
 import type { LoadedPersona } from "@persona-x/runtime/interface.js";
 import { loadBoardPersonas } from "./personas";
 import { generateBoardBrief } from "./board-brief";
+import { LLM_MODEL } from "./constants";
 import type { BoardSessionEvent, PersonaResponse } from "./types";
 
 /**
@@ -117,7 +118,7 @@ export function runBoardSession(decision: string): ReadableStream<Uint8Array> {
           try {
             // Use streaming via Anthropic SDK directly for per-token delivery
             const stream = client.messages.stream({
-              model: "claude-sonnet-4-20250514",
+              model: LLM_MODEL,
               max_tokens: 1024,
               temperature: 0.7,
               system: systemPrompt,

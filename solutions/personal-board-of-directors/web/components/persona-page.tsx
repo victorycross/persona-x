@@ -2,13 +2,8 @@
 
 import { useState } from "react";
 import { useBoardContext } from "@/lib/board-context";
+import { ROLE_BADGE_COLORS, DEFAULT_BADGE_COLOR } from "@/lib/constants";
 import { RubricChart } from "./rubric-chart";
-
-const ROLE_BADGE_COLORS: Record<string, string> = {
-  integrator: "bg-board-accent/15 text-board-accent border-board-accent/25",
-  challenger: "bg-rose-500/15 text-rose-400 border-rose-500/25",
-  "sense-checker": "bg-emerald-500/15 text-emerald-400 border-emerald-500/25",
-};
 
 export function PersonaPage() {
   const {
@@ -34,8 +29,7 @@ export function PersonaPage() {
   const allComplete = responses.every((r) => r.isComplete);
 
   const badgeColor =
-    ROLE_BADGE_COLORS[profile?.contributionType ?? ""] ??
-    "bg-board-text-tertiary/15 text-board-text-secondary border-board-text-tertiary/25";
+    ROLE_BADGE_COLORS[profile?.contributionType ?? ""] ?? DEFAULT_BADGE_COLOR;
 
   // Challenge input is visible when advisor finished and no challenge streaming
   const showChallengeInput =

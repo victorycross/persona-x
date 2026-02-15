@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { BoardBrief, PersonaProfile, PersonaResponse } from "@/lib/types";
+import { ROLE_BADGE_COLORS, DEFAULT_BADGE_COLOR } from "@/lib/constants";
 
 const CONFIDENCE_COLORS = {
   high: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
@@ -13,12 +14,6 @@ const STRENGTH_LABELS = {
   strong: "Strong consensus",
   moderate: "Moderate consensus",
   weak: "Weak consensus",
-};
-
-const ROLE_BADGE_COLORS: Record<string, string> = {
-  integrator: "bg-board-accent/15 text-board-accent border-board-accent/25",
-  challenger: "bg-rose-500/15 text-rose-400 border-rose-500/25",
-  "sense-checker": "bg-emerald-500/15 text-emerald-400 border-emerald-500/25",
 };
 
 interface BoardBriefDisplayProps {
@@ -198,7 +193,7 @@ export function BoardBriefDisplay({
                   const challengeCount = response.challenges?.length ?? 0;
                   const badgeColor =
                     ROLE_BADGE_COLORS[profile?.contributionType ?? ""] ??
-                    "bg-board-text-tertiary/15 text-board-text-secondary border-board-text-tertiary/25";
+                    DEFAULT_BADGE_COLOR;
 
                   return (
                     <div

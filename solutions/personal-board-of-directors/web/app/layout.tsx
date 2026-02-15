@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Instrument_Serif, DM_Sans } from "next/font/google";
+import { PERSONA_COUNT } from "@/lib/personas";
 import "./globals.css";
 
 const instrumentSerif = Instrument_Serif({
@@ -42,7 +43,7 @@ export default function RootLayout({
               </p>
             </div>
             <div className="text-xs text-board-text-tertiary font-sans">
-              8 advisors
+              {PERSONA_COUNT} advisors
             </div>
           </div>
         </header>

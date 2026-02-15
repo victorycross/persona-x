@@ -20,7 +20,7 @@ const STEP_INDEX: Record<FlowStep, number> = {
 };
 
 export function StepIndicator() {
-  const { step, currentPersonaIndex, responses } = useBoardContext();
+  const { step, currentPersonaIndex, responses, profiles } = useBoardContext();
 
   const activeIndex = STEP_INDEX[step];
 
@@ -46,13 +46,13 @@ export function StepIndicator() {
       {step === "persona_review" && responses.length > 0 && (
         <div className="text-center">
           <p className="text-xs text-board-text-tertiary font-sans">
-            Advisor {currentPersonaIndex + 1} of {Math.max(responses.length, 8)}
+            Advisor {currentPersonaIndex + 1} of {Math.max(responses.length, profiles.length)}
           </p>
           <div className="mt-1.5 mx-auto max-w-[200px] h-0.5 rounded-full bg-board-border overflow-hidden">
             <div
               className="h-full rounded-full bg-board-accent transition-all duration-300"
               style={{
-                width: `${((currentPersonaIndex + 1) / 8) * 100}%`,
+                width: `${((currentPersonaIndex + 1) / Math.max(profiles.length, 1)) * 100}%`,
               }}
             />
           </div>

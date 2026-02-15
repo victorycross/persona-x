@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@persona-x/llm/client.js";
 import { sendMessage } from "@persona-x/llm/client.js";
+import { PERSONA_COUNT } from "@/lib/personas";
 
-const SYSTEM_PROMPT = `You generate probing follow-up questions that help a board of 8 advisors give better counsel on a user's decision.
+const SYSTEM_PROMPT = `You generate probing follow-up questions that help a board of ${PERSONA_COUNT} advisors give better counsel on a user's decision.
 
-The 8 advisors are: a Strategist, a Mentor, a Devil's Advocate, a Visionary, a Pragmatist, an Analyst, a Coach, and an Ethicist.
+The ${PERSONA_COUNT} advisors are: a Strategist, a Mentor, a Devil's Advocate, a Visionary, a Pragmatist, an Analyst, a Coach, and an Ethicist.
 
 Given a decision statement, produce 3-5 short, incisive questions that would surface missing context, unstated assumptions, or hidden constraints. Each question should help at least one advisor give a sharper, more tailored response.
 

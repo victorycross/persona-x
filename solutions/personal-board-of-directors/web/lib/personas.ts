@@ -16,6 +16,8 @@ const PERSONA_FILES = [
   "the-ethicist.yaml",
 ];
 
+export const PERSONA_COUNT = PERSONA_FILES.length;
+
 let cachedPersonas: LoadedPersona[] | null = null;
 
 /**

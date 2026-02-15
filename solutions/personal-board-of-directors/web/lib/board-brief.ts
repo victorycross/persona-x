@@ -2,8 +2,9 @@ import type Anthropic from "@anthropic-ai/sdk";
 import { sendMessage } from "@persona-x/llm/client.js";
 import type { BoardBrief, PersonaResponse } from "./types";
 
-const BRIEF_SYSTEM_PROMPT = `You are the Board Brief synthesiser for a Personal Board of Directors advisory service.
-Your job is to analyse the individual perspectives of 8 AI advisor personas and produce a structured synthesis.
+function buildBriefSystemPrompt(personaCount: number): string {
+  return `You are the Board Brief synthesiser for a Personal Board of Directors advisory service.
+Your job is to analyse the individual perspectives of ${personaCount} AI advisor personas and produce a structured synthesis.
 
 You must output valid JSON matching this exact structure:
 {
@@ -34,6 +35,7 @@ Rules:
 - Low-confidence recommendations should be labelled honestly
 - Some advisors may have received follow-up challenges. Their refined positions should carry more weight than initial takes on those points.
 - Output ONLY valid JSON, no markdown or explanation`;
+}
 
 /**
  * Generate a Board Brief from the collected persona responses.
@@ -68,7 +70,7 @@ ${responseSummary}
 Synthesise these perspectives into a Board Brief. Output valid JSON only.`;
 
   const result = await sendMessage(client, {
-    system: BRIEF_SYSTEM_PROMPT,
+    system: buildBriefSystemPrompt(responses.length),
     messages: [{ role: "user", content: userPrompt }],
     maxTokens: 2048,
     temperature: 0.3,
