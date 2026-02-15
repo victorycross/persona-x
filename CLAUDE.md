@@ -108,6 +108,31 @@ docs/                          ← core framework research and use case analysis
 |---|---|---|
 | **Personal Board of Directors** | Consumer subscription product — 8 pre-built advisor personas for career, life, and business decisions | BRD + Product Spec complete |
 
+## Personal Board of Directors Web App
+
+The web app lives in `solutions/personal-board-of-directors/web/` and is a Next.js 15 app with Tailwind CSS v3.
+
+### Tailwind CSS Cache Issue
+
+When changing CSS variables or Tailwind color definitions in `globals.css` or `tailwind.config.ts`, the Next.js dev server caches stale compiled CSS. Changes to CSS variable values (e.g. switching color palettes) will appear to have no effect until the cache is cleared.
+
+**Fix:** Delete `.next/` and restart the dev server:
+
+```bash
+rm -rf solutions/personal-board-of-directors/web/.next
+cd solutions/personal-board-of-directors/web && npm run dev
+```
+
+This is required whenever `globals.css` CSS variable values or `tailwind.config.ts` color definitions change. Hot reload alone is not sufficient for these changes.
+
+### Web App Scripts
+
+| Command | Purpose |
+|---|---|
+| `npm run dev` | Start Next.js dev server |
+| `npm run build` | Production build (must pass with zero errors) |
+| `npm run lint` | Run ESLint |
+
 ## Development Workflow
 
 ### Setup
