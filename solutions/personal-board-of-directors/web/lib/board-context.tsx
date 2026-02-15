@@ -6,6 +6,7 @@ import {
   useState,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   type ReactNode,
 } from "react";
@@ -110,7 +111,10 @@ export function BoardProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Build enriched decision from original + probing Q&A
-  const enrichedDecision = buildEnrichedDecision(decision, probingQuestions, probingAnswers);
+  const enrichedDecision = useMemo(
+    () => buildEnrichedDecision(decision, probingQuestions, probingAnswers),
+    [decision, probingQuestions, probingAnswers]
+  );
 
   // Generate probing questions from the API
   const generateProbingQuestions = useCallback(async (decisionText: string) => {

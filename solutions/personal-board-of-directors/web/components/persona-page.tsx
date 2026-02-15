@@ -182,6 +182,7 @@ export function PersonaPage() {
             onKeyDown={handleChallengeKeyDown}
             placeholder="Ask a follow-up question or push back on their perspective..."
             rows={3}
+            maxLength={2000}
             className="w-full resize-none rounded-[12px] border border-board-border bg-board-bg px-4 py-3 text-sm text-board-text placeholder:text-board-text-tertiary/50 focus:outline-none focus:border-board-accent/50 transition-colors"
           />
           <div className="flex items-center justify-between mt-3">

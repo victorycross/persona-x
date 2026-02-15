@@ -27,11 +27,35 @@ export function useBoardSession() {
 
   const abortRef = useRef<AbortController | null>(null);
 
+  // Token buffering: accumulate tokens in a map keyed by personaId,
+  // flush to state on requestAnimationFrame to reduce re-renders
+  const tokenBufferRef = useRef<Map<string, string>>(new Map());
+  const rafPendingRef = useRef(false);
+
+  function scheduleTokenFlush() {
+    if (rafPendingRef.current) return;
+    rafPendingRef.current = true;
+    requestAnimationFrame(() => {
+      rafPendingRef.current = false;
+      const buffered = new Map(tokenBufferRef.current);
+      tokenBufferRef.current.clear();
+      if (buffered.size === 0) return;
+      setState((prev) => ({
+        ...prev,
+        responses: prev.responses.map((r) => {
+          const extra = buffered.get(r.personaId);
+          return extra ? { ...r, content: r.content + extra } : r;
+        }),
+      }));
+    });
+  }
+
   const startSession = useCallback(async (decision: string) => {
     // Abort any existing session
     abortRef.current?.abort();
     const abortController = new AbortController();
     abortRef.current = abortController;
+    tokenBufferRef.current.clear();
 
     setState({
       status: "loading",
@@ -81,17 +105,30 @@ export function useBoardSession() {
           } catch {
             continue;
           }
-          handleEvent(event, setState);
+          handleEvent(event, setState, tokenBufferRef, scheduleTokenFlush);
         }
       }
 
-      // Process any remaining buffer
+      // Flush any remaining buffered tokens before processing final buffer
+      if (tokenBufferRef.current.size > 0) {
+        const buffered = new Map(tokenBufferRef.current);
+        tokenBufferRef.current.clear();
+        setState((prev) => ({
+          ...prev,
+          responses: prev.responses.map((r) => {
+            const extra = buffered.get(r.personaId);
+            return extra ? { ...r, content: r.content + extra } : r;
+          }),
+        }));
+      }
+
+      // Process any remaining SSE buffer
       if (buffer.trim()) {
         const dataMatch = buffer.match(/^data: (.+)$/m);
         if (dataMatch) {
           try {
             const event: BoardSessionEvent = JSON.parse(dataMatch[1]);
-            handleEvent(event, setState);
+            handleEvent(event, setState, tokenBufferRef, scheduleTokenFlush);
           } catch {
             // Truncated SSE frame — ignore
           }
@@ -124,7 +161,9 @@ export function useBoardSession() {
 
 function handleEvent(
   event: BoardSessionEvent,
-  setState: React.Dispatch<React.SetStateAction<BoardSessionState>>
+  setState: React.Dispatch<React.SetStateAction<BoardSessionState>>,
+  tokenBufferRef: React.RefObject<Map<string, string>>,
+  scheduleTokenFlush: () => void
 ) {
   switch (event.type) {
     case "persona_start":
@@ -144,18 +183,34 @@ function handleEvent(
       }));
       break;
 
-    case "persona_token":
-      setState((prev) => ({
-        ...prev,
-        responses: prev.responses.map((r) =>
-          r.personaId === event.personaId
-            ? { ...r, content: r.content + event.token }
-            : r
-        ),
-      }));
+    case "persona_token": {
+      // Buffer tokens and flush on next animation frame
+      const buf = tokenBufferRef.current;
+      if (buf) {
+        buf.set(event.personaId, (buf.get(event.personaId) ?? "") + event.token);
+        scheduleTokenFlush();
+      }
       break;
+    }
 
     case "persona_complete":
+      // Flush any buffered tokens for this persona before marking complete
+      if (tokenBufferRef.current) {
+        const pending = tokenBufferRef.current.get(event.personaId);
+        if (pending) {
+          tokenBufferRef.current.delete(event.personaId);
+          setState((prev) => ({
+            ...prev,
+            activePersonaId: null,
+            responses: prev.responses.map((r) =>
+              r.personaId === event.personaId
+                ? { ...r, content: r.content + pending, isComplete: true }
+                : r
+            ),
+          }));
+          break;
+        }
+      }
       setState((prev) => ({
         ...prev,
         activePersonaId: null,

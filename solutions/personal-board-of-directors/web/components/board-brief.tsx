@@ -22,10 +22,11 @@ const ROLE_BADGE_COLORS: Record<string, string> = {
 };
 
 interface BoardBriefDisplayProps {
-  brief: BoardBrief;
+  brief: BoardBrief | null;
   responses: PersonaResponse[];
   profiles: PersonaProfile[];
   briefLoading?: boolean;
+  onBack?: () => void;
 }
 
 export function BoardBriefDisplay({
@@ -33,6 +34,7 @@ export function BoardBriefDisplay({
   responses,
   profiles,
   briefLoading,
+  onBack,
 }: BoardBriefDisplayProps) {
   const [expandedAdvisor, setExpandedAdvisor] = useState<string | null>(null);
 
@@ -55,17 +57,29 @@ export function BoardBriefDisplay({
         </p>
       </div>
 
-      {/* Loading overlay for brief regeneration */}
-      {briefLoading && (
+      {/* Back button */}
+      {onBack && (
+        <button
+          onClick={onBack}
+          className="text-sm text-board-text-secondary hover:text-board-text transition-colors"
+        >
+          &larr; Back to advisors
+        </button>
+      )}
+
+      {/* Loading state */}
+      {(briefLoading || !brief) && (
         <div className="rounded-[16px] border border-board-accent/20 bg-board-surface px-6 py-8 text-center">
           <div className="flex items-center justify-center gap-2 text-sm text-board-accent">
             <span className="h-1.5 w-1.5 rounded-full bg-board-accent animate-pulse" />
-            Regenerating brief with challenge context...
+            {briefLoading
+              ? "Regenerating brief with challenge context..."
+              : "Generating Board Brief..."}
           </div>
         </div>
       )}
 
-      {!briefLoading && (
+      {!briefLoading && brief && (
         <>
           {/* Consensus */}
           <section className="rounded-[16px] border border-board-border bg-board-surface px-6 py-7">
@@ -194,6 +208,8 @@ export function BoardBriefDisplay({
                       {/* Accordion header */}
                       <button
                         onClick={() => toggleAdvisor(response.personaId)}
+                        aria-expanded={isExpanded}
+                        aria-controls={`advisor-panel-${response.personaId}`}
                         className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-board-bg/50 transition-colors"
                       >
                         <div className="flex items-center gap-3">
@@ -227,7 +243,12 @@ export function BoardBriefDisplay({
 
                       {/* Accordion body */}
                       {isExpanded && (
-                        <div className="px-6 pb-5 border-t border-board-border">
+                        <div
+                          id={`advisor-panel-${response.personaId}`}
+                          role="region"
+                          aria-label={`${response.personaName} response details`}
+                          className="px-6 pb-5 border-t border-board-border"
+                        >
                           {/* Initial response */}
                           <div className="pt-4">
                             <p className="text-[10px] uppercase tracking-widest text-board-text-tertiary mb-2 font-sans">
