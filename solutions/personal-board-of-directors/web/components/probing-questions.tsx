@@ -111,7 +111,7 @@ export function ProbingQuestions() {
             onClick={handleBack}
             className="text-sm text-board-text-secondary hover:text-board-text transition-colors"
           >
-            &larr; Edit decision
+            <span aria-hidden="true">&larr;</span> Edit decision
           </button>
           <button
             type="submit"

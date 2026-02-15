@@ -32,6 +32,12 @@ export default function RootLayout({
       className={`dark ${instrumentSerif.variable} ${dmSans.variable}`}
     >
       <body className="min-h-screen bg-board-bg text-board-text font-sans antialiased">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[10000] focus:rounded-lg focus:bg-board-accent focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-board-bg"
+        >
+          Skip to main content
+        </a>
         <header className="border-b border-board-border px-6 py-5">
           <div className="mx-auto max-w-3xl flex items-center justify-between">
             <div>
@@ -47,7 +53,7 @@ export default function RootLayout({
             </div>
           </div>
         </header>
-        <main className="mx-auto max-w-3xl px-6 py-8">{children}</main>
+        <main id="main-content" className="mx-auto max-w-3xl px-6 py-8">{children}</main>
       </body>
     </html>
   );

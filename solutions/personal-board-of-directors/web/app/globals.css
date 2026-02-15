@@ -8,7 +8,7 @@
   --board-surface-raised: #1a1a1e;
   --board-text: #e8e6e3;
   --board-text-secondary: #9a9693;
-  --board-text-tertiary: #5c5955;
+  --board-text-tertiary: #8a8580;
   --board-accent: #c8956c;
   --board-border: rgba(255, 255, 255, 0.06);
   --board-border-hover: rgba(255, 255, 255, 0.12);
@@ -74,4 +74,13 @@ body::before {
   transform: translateY(-2px);
   border-color: var(--board-border-hover);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .card-hover:hover { transform: none; }
 }

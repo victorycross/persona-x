@@ -15,7 +15,7 @@ const config: Config = {
           "surface-raised": "#1a1a1e",
           text: "#e8e6e3",
           "text-secondary": "#9a9693",
-          "text-tertiary": "#5c5955",
+          "text-tertiary": "#8a8580",
           accent: "#c8956c",
           "accent-glow": "rgba(200,149,108,0.08)",
           border: "rgba(255,255,255,0.06)",

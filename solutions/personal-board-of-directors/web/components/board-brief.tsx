@@ -58,13 +58,13 @@ export function BoardBriefDisplay({
           onClick={onBack}
           className="text-sm text-board-text-secondary hover:text-board-text transition-colors"
         >
-          &larr; Back to advisors
+          <span aria-hidden="true">&larr;</span> Back to advisors
         </button>
       )}
 
       {/* Loading state */}
       {(briefLoading || !brief) && (
-        <div className="rounded-[16px] border border-board-accent/20 bg-board-surface px-6 py-8 text-center">
+        <div aria-live="polite" className="rounded-[16px] border border-board-accent/20 bg-board-surface px-6 py-8 text-center">
           <div className="flex items-center justify-center gap-2 text-sm text-board-accent">
             <span className="h-1.5 w-1.5 rounded-full bg-board-accent animate-pulse" />
             {briefLoading
@@ -228,6 +228,7 @@ export function BoardBriefDisplay({
                           )}
                         </div>
                         <span
+                          aria-hidden="true"
                           className={`text-board-text-tertiary text-xs transition-transform ${
                             isExpanded ? "rotate-180" : ""
                           }`}

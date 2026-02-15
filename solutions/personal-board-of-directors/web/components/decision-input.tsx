@@ -18,14 +18,16 @@ export function DecisionInput() {
     <div className="animate-fade-in">
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="rounded-[16px] border border-board-border bg-board-surface px-6 py-7">
-          <h2 className="text-2xl font-serif text-board-text mb-1">
+          <h2 id="decision-label" className="text-2xl font-serif text-board-text mb-1">
             What decision are you facing?
           </h2>
-          <p className="text-sm text-board-text-secondary mb-5">
+          <p id="decision-hint" className="text-sm text-board-text-secondary mb-5">
             Describe the situation, your options, and what matters most to you.
           </p>
           <textarea
             id="decision"
+            aria-labelledby="decision-label"
+            aria-describedby="decision-hint"
             value={decision}
             onChange={(e) => setDecision(e.target.value)}
             placeholder="I'm considering whether to leave my current role for a startup opportunity. The startup offers equity but a 30% pay cut, and I have a family to support..."
@@ -40,7 +42,7 @@ export function DecisionInput() {
         <button
           type="submit"
           disabled={!decision.trim()}
-          className="w-full rounded-[12px] bg-board-accent px-6 py-3.5 text-sm font-semibold text-board-bg transition-colors hover:bg-board-accent/90 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="w-full rounded-[12px] bg-board-accent px-6 py-3.5 text-sm font-semibold text-board-bg transition-colors hover:bg-board-accent/90 disabled:opacity-50 disabled:bg-board-surface-raised disabled:text-board-text-secondary disabled:cursor-not-allowed"
         >
           Continue
         </button>

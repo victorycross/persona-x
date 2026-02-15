@@ -45,9 +45,13 @@ export function RubricChart({ rubric }: RubricChartProps) {
           </div>
           <div className="h-1.5 rounded-full bg-board-border overflow-hidden">
             <div
+              role="progressbar"
+              aria-valuenow={score}
+              aria-valuemin={0}
+              aria-valuemax={10}
+              aria-label={`${DIMENSION_LABELS[key] ?? key}: ${score} out of 10. ${note}`}
               className={`rubric-bar h-full rounded-full ${BAR_OPACITIES[key] ?? "bg-board-accent"}`}
               style={{ width: `${score * 10}%` }}
-              title={note}
             />
           </div>
         </div>

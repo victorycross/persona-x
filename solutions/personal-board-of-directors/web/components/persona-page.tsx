@@ -74,8 +74,19 @@ export function PersonaPage() {
 
   const nextLabel = isLastPersona && allComplete ? "View Board Brief" : "Next";
 
+  const liveMessage = challengeStatus === "streaming"
+    ? `${response.personaName} is responding to your challenge...`
+    : isStreaming
+      ? `${response.personaName} is responding...`
+      : response.isComplete
+        ? `${response.personaName} has finished responding.`
+        : "";
+
   return (
     <div className="animate-fade-in">
+      {/* Screen reader status announcements */}
+      <div className="sr-only" aria-live="polite">{liveMessage}</div>
+
       {/* Persona header */}
       <div className="mb-6">
         <div className="flex items-start justify-between">
@@ -167,10 +178,11 @@ export function PersonaPage() {
       {/* Challenge input */}
       {showChallengeInput && (
         <div className="rounded-[16px] border border-board-border bg-board-surface px-6 py-5 mb-6">
-          <label className="text-xs uppercase tracking-widest text-board-text-tertiary mb-3 block font-sans">
+          <label htmlFor="challenge-input" className="text-xs uppercase tracking-widest text-board-text-tertiary mb-3 block font-sans">
             Challenge this advisor
           </label>
           <textarea
+            id="challenge-input"
             value={challengeText}
             onChange={(e) => setChallengeText(e.target.value)}
             onKeyDown={handleChallengeKeyDown}
@@ -189,7 +201,7 @@ export function PersonaPage() {
             <button
               onClick={handleSubmitChallenge}
               disabled={!challengeText.trim()}
-              className="rounded-[10px] bg-board-accent px-4 py-2 text-xs font-semibold text-board-bg transition-colors hover:bg-board-accent/90 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="rounded-[10px] bg-board-accent px-4 py-2 text-xs font-semibold text-board-bg transition-colors hover:bg-board-accent/90 disabled:opacity-50 disabled:bg-board-surface-raised disabled:text-board-text-secondary disabled:cursor-not-allowed"
             >
               Challenge
             </button>
@@ -214,14 +226,14 @@ export function PersonaPage() {
           disabled={currentPersonaIndex === 0}
           className="text-sm text-board-text-secondary hover:text-board-text transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
         >
-          &larr; Previous
+          <span aria-hidden="true">&larr;</span> Previous
         </button>
         <button
           onClick={handleNext}
           disabled={nextDisabled}
-          className="rounded-[12px] bg-board-accent px-6 py-2.5 text-sm font-semibold text-board-bg transition-colors hover:bg-board-accent/90 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="rounded-[12px] bg-board-accent px-6 py-2.5 text-sm font-semibold text-board-bg transition-colors hover:bg-board-accent/90 disabled:opacity-50 disabled:bg-board-surface-raised disabled:text-board-text-secondary disabled:cursor-not-allowed"
         >
-          {nextLabel} &rarr;
+          {nextLabel} <span aria-hidden="true">&rarr;</span>
         </button>
       </div>
     </div>

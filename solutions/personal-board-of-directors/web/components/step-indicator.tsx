@@ -11,6 +11,14 @@ const FLOW_STEPS: FlowStep[] = [
   "board_brief",
 ];
 
+const STEP_LABELS: Record<FlowStep, string> = {
+  decision_input: "Describe Decision",
+  probing_questions: "Refine Decision",
+  consulting_board: "Consulting Board",
+  persona_review: "Review Advisors",
+  board_brief: "Board Brief",
+};
+
 const STEP_INDEX: Record<FlowStep, number> = {
   decision_input: 0,
   probing_questions: 1,
@@ -25,12 +33,14 @@ export function StepIndicator() {
   const activeIndex = STEP_INDEX[step];
 
   return (
-    <div className="mb-8">
+    <nav aria-label="Progress" className="mb-8">
       {/* Dots */}
-      <div className="flex items-center justify-center gap-2 mb-2">
+      <div role="list" className="flex items-center justify-center gap-2 mb-2">
         {FLOW_STEPS.map((s, i) => (
           <div
             key={s}
+            role="listitem"
+            aria-current={i === activeIndex ? "step" : undefined}
             className={`h-1.5 rounded-full transition-all duration-300 ${
               i < activeIndex
                 ? "w-1.5 bg-board-accent"
@@ -38,7 +48,11 @@ export function StepIndicator() {
                   ? "w-6 bg-board-accent"
                   : "w-1.5 bg-board-text-tertiary/40"
             }`}
-          />
+          >
+            <span className="sr-only">
+              {STEP_LABELS[s]}{i < activeIndex ? " (completed)" : i === activeIndex ? " (current)" : ""}
+            </span>
+          </div>
         ))}
       </div>
 
@@ -58,6 +72,6 @@ export function StepIndicator() {
           </div>
         </div>
       )}
-    </div>
+    </nav>
   );
 }
