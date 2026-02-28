@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { PERSONA_COUNT } from "@/lib/personas";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SettingsModal } from "@/components/settings-modal";
+import { EngineNav } from "@/components/engine/engine-nav";
 import "./globals.css";
 
 const inter = Inter({
@@ -12,8 +12,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Personal Board of Directors",
-  description: "Multi-perspective AI advisory for life's important decisions",
+  title: "Persona-x",
+  description: "AI advisory frameworks for decisions that matter",
 };
 
 export default function RootLayout({
@@ -39,16 +39,14 @@ export default function RootLayout({
             <div className="mx-auto max-w-3xl flex items-center justify-between">
               <div>
                 <h1 className="text-xl font-bold text-board-text tracking-tight">
-                  Personal Board of Directors
+                  Persona-x
                 </h1>
                 <p className="text-xs text-board-text-secondary mt-0.5">
-                  Structured multi-perspective counsel for important decisions
+                  AI advisory frameworks for decisions that matter
                 </p>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-xs text-board-text-tertiary">
-                  {PERSONA_COUNT} advisors
-                </span>
+                <EngineNav />
                 <SettingsModal />
               </div>
             </div>
