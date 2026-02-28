@@ -146,6 +146,32 @@ export {
 
 export type { PanelSession } from "./runtime/panel.js";
 
+export {
+  SessionRecordSchema,
+  SessionPersonaSchema,
+  SessionMessageSchema,
+  SessionRoundSchema,
+  RubricSnapshotSchema,
+  createSessionRecord,
+  sessionToYaml,
+  yamlToSession,
+  saveSessionToFile,
+  loadSessionFromFile,
+  replaySession,
+  compareSessions,
+} from "./runtime/session.js";
+
+export type {
+  SessionRecord,
+  SessionPersona,
+  SessionMessage,
+  SessionRound,
+  RubricSnapshot,
+  SessionComparison,
+  PersonaDifferences,
+  RubricShift,
+} from "./runtime/session.js";
+
 // LLM exports
 export {
   createClient,

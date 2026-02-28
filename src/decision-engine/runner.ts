@@ -8,6 +8,7 @@ import {
 } from "../llm/panel-llm.js";
 import type { PanelMessage, PanelRound } from "../runtime/interface.js";
 import { loadPersonasForPanel } from "../runtime/loader.js";
+import type { PanelSession } from "../runtime/panel.js";
 import {
   createPanelSession,
   determineSpeakingOrder,
@@ -53,6 +54,7 @@ export interface StageRunResult {
   state: DecisionPipelineState;
   transcript: TranscriptRound[];
   killReason: string | null;
+  session: PanelSession;
 }
 
 /**
@@ -151,7 +153,7 @@ export async function runStage(
   // 6. Evaluate cross-stage kill criteria
   const killReason = checkKillCriteria(updated);
 
-  return { state: updated, transcript, killReason };
+  return { state: updated, transcript, killReason, session };
 }
 
 /**
