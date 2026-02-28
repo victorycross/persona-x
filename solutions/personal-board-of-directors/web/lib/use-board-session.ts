@@ -74,7 +74,14 @@ export function useBoardSession() {
       });
 
       if (!res.ok) {
-        throw new Error(`Session failed: ${res.status} ${res.statusText}`);
+        let errorMessage = `Session failed (${res.status})`;
+        try {
+          const errorBody = await res.json();
+          errorMessage = errorBody.error ?? errorMessage;
+        } catch {
+          // Response is not JSON — use the status code message
+        }
+        throw new Error(errorMessage);
       }
 
       const reader = res.body?.getReader();

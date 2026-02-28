@@ -2,8 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@persona-x/llm/client.js";
 import { generateBoardBrief } from "@/lib/board-brief";
 import type { PersonaResponse } from "@/lib/types";
+import { checkApiKey, apiErrorResponse } from "@/lib/api-error";
 
 export async function POST(request: NextRequest) {
+  const keyError = checkApiKey();
+  if (keyError) return keyError;
+
   let body: {
     decision?: string;
     responses?: PersonaResponse[];
@@ -62,9 +66,6 @@ export async function POST(request: NextRequest) {
     const brief = await generateBoardBrief(client, decision, responses);
     return NextResponse.json({ brief });
   } catch (err) {
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : String(err) },
-      { status: 500 }
-    );
+    return apiErrorResponse(err);
   }
 }
