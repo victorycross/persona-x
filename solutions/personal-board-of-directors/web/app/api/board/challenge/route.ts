@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { runChallengeStream } from "@/lib/challenge-stream";
+import { checkApiKey } from "@/lib/api-error";
 
 export async function POST(request: NextRequest) {
+  const keyError = checkApiKey();
+  if (keyError) return keyError;
+
   let body: {
     personaId?: string;
     decision?: string;

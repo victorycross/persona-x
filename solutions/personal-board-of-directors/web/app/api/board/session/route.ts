@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { runBoardSession } from "@/lib/session-stream";
+import { checkApiKey } from "@/lib/api-error";
 
 export async function POST(request: NextRequest) {
+  const keyError = checkApiKey();
+  if (keyError) return keyError;
+
   let body: { decision?: string };
   try {
     body = await request.json();

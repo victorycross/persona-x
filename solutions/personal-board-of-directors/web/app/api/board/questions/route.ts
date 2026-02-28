@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@persona-x/llm/client.js";
 import { sendMessage } from "@persona-x/llm/client.js";
 import { PERSONA_COUNT } from "@/lib/personas";
+import { checkApiKey, apiErrorResponse } from "@/lib/api-error";
 
 const SYSTEM_PROMPT = `You generate probing follow-up questions that help a board of ${PERSONA_COUNT} advisors give better counsel on a user's decision.
 
@@ -24,6 +25,9 @@ Rules:
 - Output ONLY valid JSON, no markdown or explanation`;
 
 export async function POST(request: Request) {
+  const keyError = checkApiKey();
+  if (keyError) return keyError;
+
   try {
     const body = await request.json();
     const decision = body.decision?.trim();
@@ -58,9 +62,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ questions });
   } catch (err) {
     console.error("Failed to generate probing questions:", err);
-    return NextResponse.json(
-      { error: "Failed to generate questions" },
-      { status: 500 }
-    );
+    return apiErrorResponse(err);
   }
 }
