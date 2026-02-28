@@ -58,12 +58,14 @@ Persona-x/
 │   ├── runtime/               # Panel runtime interface
 │   │   ├── loader.ts          # Persona file loading & hydration
 │   │   ├── panel.ts           # Panel simulation engine
-│   │   └── interface.ts       # Runtime contract types
+│   │   ├── interface.ts       # Runtime contract types
+│   │   └── session.ts         # Session persistence (save/load/replay/compare)
 │   └── utils/                 # Shared utilities
 │       ├── yaml.ts            # YAML serialisation/deserialisation
 │       └── version.ts         # Semantic versioning for personas
 ├── examples/                  # Example persona files
-│   └── risk-analyst.yaml      # Sample persona definition file
+│   ├── risk-analyst.yaml      # Sample persona definition file
+│   └── engine/                # All 16 Decision Engine personas (Stages 1–4)
 └── tests/                     # Test suites
     ├── schema/                # Schema validation tests
     ├── engine/                # Engine logic tests
@@ -106,7 +108,7 @@ docs/                          ← core framework research and use case analysis
 
 | Solution | Description | Status |
 |---|---|---|
-| **Personal Board of Directors** | Consumer subscription product — 8 pre-built advisor personas for career, life, and business decisions | BRD + Product Spec complete |
+| **Personal Board of Directors** | Consumer subscription product — 8 pre-built advisor personas for career, life, and business decisions | Next.js web app production hardened — 8 personas, 5 API routes, structured error handling, `lang="en-AU"` |
 
 ## Personal Board of Directors Web App
 
@@ -317,6 +319,14 @@ invocation:
 - Commit messages: imperative mood, concise, focused on "why"
 - No force pushes to main
 - Push with `-u origin <branch-name>`
+
+## Phase 2 — Current Work
+
+**Read `docs/PHASE2-WORKPLAN.md` for the authoritative list of what is built and what remains.**
+
+The workplan supersedes the "What Is NOT Built Yet" section in `docs/BUILD-PROMPT.md` where they conflict. Use the `/phase2` command to load context and check build health before starting work. Use `/status` to verify all four gate commands pass.
+
+**Phase 2 complete.** All 16 engine persona YAML files exist and validate. Decision Engine runner (`src/decision-engine/runner.ts`) wires pipeline to panel runtime and LLM. Session persistence ships in `src/runtime/session.ts` (save/load/replay/compare). PBoD web app is production hardened with structured error handling and `lang="en-AU"`. 130 tests passing across 9 test files.
 
 ## Important Notes for AI Assistants
 
