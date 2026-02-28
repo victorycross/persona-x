@@ -213,7 +213,20 @@ export type {
   DecisionPipelineState,
   AuditEntry,
   StagePanel,
+  TranscriptMessage,
+  TranscriptRound,
 } from "./decision-engine/pipeline.js";
+
+export {
+  runStage,
+  runDecisionEngine,
+  DEFAULT_PERSONA_DIR,
+} from "./decision-engine/runner.js";
+
+export type {
+  RunnerOptions,
+  StageRunResult,
+} from "./decision-engine/runner.js";
 
 // Utility exports
 export {
