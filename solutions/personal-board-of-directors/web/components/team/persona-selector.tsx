@@ -44,7 +44,7 @@ export function PersonaSelector() {
           const isSelected = selectedPersonaIds.includes(persona.id);
           const badgeColor =
             ROLE_BADGE_COLORS[persona.contributionType] ?? DEFAULT_BADGE_COLOR;
-          const activeStance: PersonaStance = personaStances[persona.id] ?? "balanced";
+          const activeStance: PersonaStance = personaStances[persona.id] ?? "constructive";
 
           return (
             <div

@@ -107,7 +107,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       const stance = rawStances[id];
       stances[id] = VALID_STANCES.includes(stance as PersonaStance)
         ? (stance as PersonaStance)
-        : "balanced";
+        : "constructive";
     }
 
     return NextResponse.json({ selectedPersonaIds, stances });

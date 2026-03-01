@@ -25,6 +25,7 @@ interface BizCaseContextValue {
   togglePersona(id: string): void;
   messages: ChatMessage[];
   currentQuestionIndex: number;
+  answers: InterviewAnswer[];
   userInput: string;
   setUserInput(s: string): void;
   isStreaming: boolean;
@@ -411,6 +412,7 @@ export function BizCaseProvider({ children }: { children: ReactNode }) {
         togglePersona,
         messages,
         currentQuestionIndex,
+        answers,
         userInput,
         setUserInput,
         isStreaming,

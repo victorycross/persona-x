@@ -3,6 +3,12 @@
 import { useTeamContext } from "@/lib/team-context";
 import { TEAM_PERSONA_CATALOGUE } from "@/lib/team-personas";
 import { ROLE_BADGE_COLORS, DEFAULT_BADGE_COLOR } from "@/lib/constants";
+import { ExportDropdown } from "@/components/export-dropdown";
+import {
+  downloadResponseMarkdown,
+  downloadResponseText,
+  printResponse,
+} from "@/lib/export";
 
 export function TeamReview() {
   const {
@@ -12,6 +18,7 @@ export function TeamReview() {
     setCurrentMemberIndex,
     setStep,
     teamBrief,
+    personaStances,
   } = useTeamContext();
 
   const response = responses[currentMemberIndex];
@@ -25,6 +32,15 @@ export function TeamReview() {
 
   const badgeColor =
     ROLE_BADGE_COLORS[catalogue?.contributionType ?? ""] ?? DEFAULT_BADGE_COLOR;
+
+  const stance = personaStances[response.personaId] ?? "constructive";
+  const exportData = {
+    personaName: response.personaName,
+    contributionType: catalogue?.contributionType ?? "",
+    tagline: catalogue?.tagline ?? "",
+    stance,
+    content: response.content,
+  };
 
   const nextDisabled = isStreaming || (isLast && !allComplete);
   const nextLabel = isLast && allComplete ? "View Team Brief" : "Next";
@@ -67,15 +83,24 @@ export function TeamReview() {
               </div>
             )}
           </div>
-          {isActive && (
-            <div className="flex items-center gap-1.5 text-xs text-board-accent">
-              <span className="h-1.5 w-1.5 rounded-full bg-board-accent animate-pulse" />
-              Speaking
-            </div>
-          )}
-          {!isActive && response.isComplete && (
-            <div className="text-xs text-board-text-tertiary">Complete</div>
-          )}
+          <div className="flex items-center gap-2 shrink-0">
+            {isActive && (
+              <div className="flex items-center gap-1.5 text-xs text-board-accent">
+                <span className="h-1.5 w-1.5 rounded-full bg-board-accent animate-pulse" />
+                Speaking
+              </div>
+            )}
+            {!isActive && response.isComplete && (
+              <ExportDropdown
+                disabled={!response.isComplete}
+                options={[
+                  { label: "Print / Save as PDF", onClick: () => printResponse(exportData) },
+                  { label: "Download .md", onClick: () => downloadResponseMarkdown(exportData) },
+                  { label: "Download .txt", onClick: () => downloadResponseText(exportData) },
+                ]}
+              />
+            )}
+          </div>
         </div>
       </div>
 

@@ -1,17 +1,16 @@
 "use client";
 
-import { useState } from "react";
 import { useBizCaseContext } from "@/lib/biz-case-context";
+import { ExportDropdown } from "@/components/export-dropdown";
+import { downloadBizCaseMarkdown, downloadBizCaseText, printBizCase } from "@/lib/export";
 
 export function BizCaseResult() {
-  const { narrativeContent, restartSession, improveNarrative, isImproving } = useBizCaseContext();
-  const [copied, setCopied] = useState(false);
+  const { narrativeContent, answers, restartSession, improveNarrative, isImproving } = useBizCaseContext();
+
+  const exportData = { answers, narrativeContent };
 
   function handleCopy() {
-    navigator.clipboard.writeText(narrativeContent).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
+    void navigator.clipboard.writeText(narrativeContent);
   }
 
   return (
@@ -28,13 +27,15 @@ export function BizCaseResult() {
           >
             {isImproving ? "Improving…" : "Improve ✦"}
           </button>
-          <button
-            onClick={handleCopy}
+          <ExportDropdown
             disabled={isImproving}
-            className="rounded-lg border border-board-border bg-board-surface px-3 py-1.5 text-xs font-medium text-board-text-secondary transition-colors hover:border-board-accent/40 hover:text-board-text disabled:opacity-50"
-          >
-            {copied ? "Copied!" : "Copy to Clipboard"}
-          </button>
+            options={[
+              { label: "Print / Save as PDF", onClick: () => printBizCase(exportData) },
+              { label: "Download .md", onClick: () => downloadBizCaseMarkdown(exportData) },
+              { label: "Download .txt", onClick: () => downloadBizCaseText(exportData) },
+              { label: "Copy narrative", onClick: handleCopy },
+            ]}
+          />
           <button
             onClick={restartSession}
             className="rounded-lg border border-board-border bg-board-surface px-3 py-1.5 text-xs font-medium text-board-text-secondary transition-colors hover:border-board-accent/40 hover:text-board-text"

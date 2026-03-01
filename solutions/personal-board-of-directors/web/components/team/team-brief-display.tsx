@@ -2,6 +2,8 @@
 
 import { useTeamContext } from "@/lib/team-context";
 import { ROLE_BADGE_COLORS, DEFAULT_BADGE_COLOR } from "@/lib/constants";
+import { ExportDropdown } from "@/components/export-dropdown";
+import { downloadFullBriefMarkdown, downloadFullBriefText, printFullBrief } from "@/lib/export";
 
 function verdictColour(rec: string): string {
   switch (rec) {
@@ -45,6 +47,8 @@ function strengthBadge(strength: string): string {
 export function TeamBriefDisplay() {
   const {
     teamBrief,
+    projectBrief,
+    resources,
     restartSession,
     setStep,
     responses,
@@ -67,18 +71,35 @@ export function TeamBriefDisplay() {
   const { alignment, critical_risks, build_priorities, unknowns, verdict } = teamBrief;
   const founderBadgeColor = ROLE_BADGE_COLORS["integrator"] ?? DEFAULT_BADGE_COLOR;
 
+  const briefExportData = {
+    projectBrief,
+    resources,
+    responses,
+    teamBrief,
+    founderVisionContent,
+  };
+
   return (
     <div className="animate-fade-in space-y-6">
-      {/* Header with Improve button */}
+      {/* Header with Improve + Export buttons */}
       <div className="flex items-center justify-between">
         <div />
-        <button
-          onClick={() => improveBrief()}
-          disabled={improvingBrief}
-          className="rounded-lg border border-board-border bg-board-surface px-3 py-1.5 text-xs font-medium text-board-text-secondary transition-colors hover:border-board-accent/40 hover:text-board-text disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {improvingBrief ? "Improving…" : "Improve ✦"}
-        </button>
+        <div className="flex items-center gap-2">
+          <ExportDropdown
+            options={[
+              { label: "Print / Save as PDF", onClick: () => printFullBrief(briefExportData) },
+              { label: "Download .md", onClick: () => downloadFullBriefMarkdown(briefExportData) },
+              { label: "Download .txt", onClick: () => downloadFullBriefText(briefExportData) },
+            ]}
+          />
+          <button
+            onClick={() => improveBrief()}
+            disabled={improvingBrief}
+            className="rounded-lg border border-board-border bg-board-surface px-3 py-1.5 text-xs font-medium text-board-text-secondary transition-colors hover:border-board-accent/40 hover:text-board-text disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {improvingBrief ? "Improving…" : "Improve ✦"}
+          </button>
+        </div>
       </div>
 
       {/* Verdict */}
