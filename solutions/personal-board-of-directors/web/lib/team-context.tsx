@@ -397,9 +397,10 @@ export function TeamProvider({ children }: { children: ReactNode }) {
         const data = await res.json().catch(() => ({}));
         throw new Error((data as { error?: string }).error ?? `HTTP ${res.status}`);
       }
-      const data = await res.json() as { selectedPersonaIds: string[]; stances: PersonaStanceMap };
-      setSelectedPersonaIds(data.selectedPersonaIds ?? []);
-      setPersonaStancesState(data.stances ?? {});
+      const data = await res.json() as { selectedPersonaIds: string[] };
+      const ids = data.selectedPersonaIds ?? [];
+      setSelectedPersonaIds(ids);
+      setPersonaStancesState(Object.fromEntries(ids.map((id) => [id, "constructive" as const])));
       setStep("persona_select");
     } catch (err) {
       setSessionError(err instanceof Error ? err.message : String(err));
