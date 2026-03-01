@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useBizCaseContext } from "@/lib/biz-case-context";
 
 export function BizCaseResult() {
-  const { narrativeContent, restartSession } = useBizCaseContext();
+  const { narrativeContent, restartSession, improveNarrative, isImproving } = useBizCaseContext();
   const [copied, setCopied] = useState(false);
 
   function handleCopy() {
@@ -22,8 +22,16 @@ export function BizCaseResult() {
         </h2>
         <div className="flex items-center gap-2 shrink-0">
           <button
+            onClick={() => improveNarrative()}
+            disabled={isImproving}
+            className="rounded-lg border border-board-border bg-board-surface px-3 py-1.5 text-xs font-medium text-board-text-secondary transition-colors hover:border-board-accent/40 hover:text-board-text disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isImproving ? "Improving…" : "Improve ✦"}
+          </button>
+          <button
             onClick={handleCopy}
-            className="rounded-lg border border-board-border bg-board-surface px-3 py-1.5 text-xs font-medium text-board-text-secondary transition-colors hover:border-board-accent/40 hover:text-board-text"
+            disabled={isImproving}
+            className="rounded-lg border border-board-border bg-board-surface px-3 py-1.5 text-xs font-medium text-board-text-secondary transition-colors hover:border-board-accent/40 hover:text-board-text disabled:opacity-50"
           >
             {copied ? "Copied!" : "Copy to Clipboard"}
           </button>

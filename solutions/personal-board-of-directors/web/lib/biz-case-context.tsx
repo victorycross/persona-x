@@ -30,9 +30,11 @@ interface BizCaseContextValue {
   narrativeContent: string;
   sessionError: string | null;
   interviewComplete: boolean;
+  isImproving: boolean;
   startInterview(): void;
   submitAnswer(): void;
   generateCase(): void;
+  improveNarrative(): void;
   restartSession(): void;
 }
 
@@ -91,6 +93,7 @@ export function BizCaseProvider({ children }: { children: ReactNode }) {
   const [narrativeContent, setNarrativeContent] = useState("");
   const [sessionError, setSessionError] = useState<string | null>(null);
   const [interviewComplete, setInterviewComplete] = useState(false);
+  const [isImproving, setIsImproving] = useState(false);
 
   const togglePersona = useCallback((id: string) => {
     setSelectedPersonaIds((prev) =>
@@ -304,6 +307,42 @@ export function BizCaseProvider({ children }: { children: ReactNode }) {
     }
   }, [answers]);
 
+  const improveNarrative = useCallback(async () => {
+    const current = narrativeContent;
+    if (!current) return;
+    setIsImproving(true);
+    setNarrativeContent("");
+    setSessionError(null);
+
+    try {
+      const res = await fetch("/api/biz-case/improve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ narrative: current }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error((data as { error?: string }).error ?? `HTTP ${res.status}`);
+      }
+
+      await consumeSSE<GenerateEvent>(res, (event) => {
+        if (event.type === "narrative_token") {
+          setNarrativeContent((prev) => prev + event.token);
+        } else if (event.type === "narrative_complete") {
+          return true;
+        } else if (event.type === "error") {
+          throw new Error(event.message);
+        }
+      });
+    } catch (err) {
+      setSessionError(err instanceof Error ? err.message : String(err));
+      setNarrativeContent(current);
+    } finally {
+      setIsImproving(false);
+    }
+  }, [narrativeContent]);
+
   const restartSession = useCallback(() => {
     setStep("persona_pick");
     setSelectedPersonaIds([]);
@@ -315,6 +354,7 @@ export function BizCaseProvider({ children }: { children: ReactNode }) {
     setNarrativeContent("");
     setSessionError(null);
     setInterviewComplete(false);
+    setIsImproving(false);
   }, []);
 
   return (
@@ -331,9 +371,11 @@ export function BizCaseProvider({ children }: { children: ReactNode }) {
         narrativeContent,
         sessionError,
         interviewComplete,
+        isImproving,
         startInterview,
         submitAnswer,
         generateCase,
+        improveNarrative,
         restartSession,
       }}
     >

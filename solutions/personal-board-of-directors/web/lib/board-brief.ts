@@ -79,7 +79,7 @@ Synthesise these perspectives into a Board Brief. Output valid JSON only.`;
   return parseBoardBrief(result.content);
 }
 
-function parseBoardBrief(content: string): BoardBrief {
+export function parseBoardBrief(content: string): BoardBrief {
   // Extract JSON from possible markdown code blocks
   const jsonMatch = content.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
   const jsonStr = jsonMatch?.[1]?.trim() ?? content.trim();

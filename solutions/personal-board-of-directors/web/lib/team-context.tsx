@@ -47,6 +47,12 @@ interface TeamContextValue {
   competitiveAdvantage: CompetitiveAdvantageVerdict | null;
   sessionPhase: "founder" | "team";
 
+  autoSelectLoading: boolean;
+  autoSelectPersonas(): void;
+
+  improvingBrief: boolean;
+  improveBrief(): void;
+
   startFounderSession(): void;
   confirmCompetitiveAdvantage(verdict: CompetitiveAdvantageVerdict): void;
   startRemainingSession(): void;
@@ -159,7 +165,7 @@ function applyTeamEvent(
 }
 
 export function TeamProvider({ children }: { children: ReactNode }) {
-  const [step, setStep] = useState<TeamFlowStep>("persona_select");
+  const [step, setStep] = useState<TeamFlowStep>("project_input");
   const [selectedPersonaIds, setSelectedPersonaIds] = useState<string[]>([]);
   const [projectBrief, setProjectBrief] = useState("");
 
@@ -175,6 +181,8 @@ export function TeamProvider({ children }: { children: ReactNode }) {
   const [competitiveAdvantage, setCompetitiveAdvantage] =
     useState<CompetitiveAdvantageVerdict | null>(null);
   const [sessionPhase, setSessionPhase] = useState<"founder" | "team">("founder");
+  const [autoSelectLoading, setAutoSelectLoading] = useState(false);
+  const [improvingBrief, setImprovingBrief] = useState(false);
 
   const abortRef = useRef<AbortController | null>(null);
 
@@ -423,12 +431,62 @@ export function TeamProvider({ children }: { children: ReactNode }) {
     founderResponse,
   ]);
 
+  const autoSelectPersonas = useCallback(async () => {
+    const brief = projectBrief.trim();
+    if (!brief) return;
+    setAutoSelectLoading(true);
+    try {
+      const res = await fetch("/api/team/auto-select", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projectBrief: brief }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error((data as { error?: string }).error ?? `HTTP ${res.status}`);
+      }
+      const data = await res.json() as { selectedPersonaIds: string[]; stances: PersonaStanceMap };
+      setSelectedPersonaIds(data.selectedPersonaIds ?? []);
+      setPersonaStancesState(data.stances ?? {});
+      setStep("persona_select");
+    } catch (err) {
+      setSessionError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setAutoSelectLoading(false);
+    }
+  }, [projectBrief]);
+
+  const improveBrief = useCallback(async () => {
+    if (!teamBrief) return;
+    setImprovingBrief(true);
+    try {
+      const res = await fetch("/api/team/brief/improve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ brief: teamBrief, projectBrief }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error((data as { error?: string }).error ?? `HTTP ${res.status}`);
+      }
+      const data = await res.json() as { brief: TeamBrief };
+      if (data.brief) {
+        setTeamBrief(data.brief);
+      }
+    } catch (err) {
+      setSessionError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setImprovingBrief(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [teamBrief, projectBrief]);
+
   const restartSession = useCallback(() => {
     if (abortRef.current) {
       abortRef.current.abort();
       abortRef.current = null;
     }
-    setStep("persona_select");
+    setStep("project_input");
     setSelectedPersonaIds([]);
     setProjectBrief("");
     setSessionStatus("idle");
@@ -464,6 +522,10 @@ export function TeamProvider({ children }: { children: ReactNode }) {
         founderResponse,
         competitiveAdvantage,
         sessionPhase,
+        autoSelectLoading,
+        autoSelectPersonas,
+        improvingBrief,
+        improveBrief,
         startFounderSession,
         confirmCompetitiveAdvantage,
         startRemainingSession,

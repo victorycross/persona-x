@@ -62,6 +62,7 @@ interface BoardContextValue {
   // Brief regeneration
   briefStale: boolean;
   briefLoading: boolean;
+  improveBrief(): void;
 }
 
 const BoardContext = createContext<BoardContextValue | null>(null);
@@ -292,6 +293,29 @@ export function BoardProvider({ children }: { children: ReactNode }) {
     [responses, enrichedDecision, updateResponse, abortChallenge]
   );
 
+  const improveBrief = useCallback(() => {
+    const currentBrief = brief;
+    if (!currentBrief) return;
+    setBriefLoading(true);
+
+    (async () => {
+      try {
+        const res = await fetch("/api/board/brief/improve", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ brief: currentBrief, decision: enrichedDecision }),
+        });
+        if (!res.ok) throw new Error(`Improve failed: ${res.status}`);
+        const data = await res.json();
+        setRegeneratedBrief(data.brief);
+      } catch (err) {
+        console.error("Failed to improve brief:", err);
+      } finally {
+        setBriefLoading(false);
+      }
+    })();
+  }, [brief, enrichedDecision]);
+
   // Step setter that handles brief regeneration when navigating to board_brief
   const setStep = useCallback(
     (newStep: FlowStep) => {
@@ -387,6 +411,7 @@ export function BoardProvider({ children }: { children: ReactNode }) {
         abortChallenge,
         briefStale,
         briefLoading,
+        improveBrief,
       }}
     >
       {children}

@@ -19,7 +19,7 @@ const STEP_TITLES: Record<FlowStep, string> = {
 };
 
 function BoardFlow() {
-  const { step, brief, sessionError, responses, profiles, briefLoading, setStep, setCurrentPersonaIndex } = useBoardContext();
+  const { step, brief, sessionError, responses, profiles, briefLoading, setStep, setCurrentPersonaIndex, improveBrief } = useBoardContext();
 
   useEffect(() => {
     document.title = `${STEP_TITLES[step]} | Personal Board of Directors`;
@@ -50,6 +50,8 @@ function BoardFlow() {
             setStep("persona_review");
             setCurrentPersonaIndex(responses.length - 1);
           }}
+          onImprove={improveBrief}
+          improving={briefLoading}
         />
       )}
     </div>

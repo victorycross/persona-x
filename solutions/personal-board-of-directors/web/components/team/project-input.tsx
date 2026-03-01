@@ -1,7 +1,6 @@
 "use client";
 
 import { useTeamContext } from "@/lib/team-context";
-import { TEAM_PERSONA_CATALOGUE, estimateCost } from "@/lib/team-personas";
 
 const PLACEHOLDER =
   `Describe the software project you want the team to evaluate. Be specific about what you want to build, the problem it solves, and your target users.\n\nExample: "We want to build a mobile app that helps freelancers track their time and invoice clients automatically. The app should integrate with Xero and support multiple currencies."`;
@@ -10,22 +9,12 @@ export function ProjectInput() {
   const {
     projectBrief,
     setProjectBrief,
-    selectedPersonaIds,
-    startFounderSession,
+    autoSelectLoading,
+    autoSelectPersonas,
     setStep,
   } = useTeamContext();
 
-  const selectedNames = TEAM_PERSONA_CATALOGUE.filter((p) =>
-    selectedPersonaIds.includes(p.id)
-  ).map((p) => p.name);
-
-  const cost = estimateCost(selectedPersonaIds.length);
-
-  function handleSubmit() {
-    const trimmed = projectBrief.trim();
-    if (!trimmed) return;
-    startFounderSession();
-  }
+  const hasContent = projectBrief.trim().length > 0;
 
   return (
     <div className="animate-fade-in">
@@ -33,31 +22,8 @@ export function ProjectInput() {
         Describe Your Project
       </h2>
       <p className="text-sm text-board-text-secondary mb-6">
-        Your selected team will each respond from their role's perspective.
+        Tell us what you&apos;re building and we&apos;ll auto-select the most relevant team members, or choose them yourself.
       </p>
-
-      {/* Selected team summary */}
-      <div className="mb-5 rounded-xl border border-board-border bg-board-surface px-4 py-3">
-        <p className="text-xs font-medium text-board-text-tertiary mb-2">
-          Selected team ({selectedPersonaIds.length} members · ~${cost.toFixed(2)} estimated)
-        </p>
-        <div className="flex flex-wrap gap-1.5">
-          {selectedNames.map((name) => (
-            <span
-              key={name}
-              className="rounded-full bg-board-accent/10 px-2.5 py-0.5 text-xs font-medium text-board-accent"
-            >
-              {name}
-            </span>
-          ))}
-        </div>
-        <button
-          onClick={() => setStep("persona_select")}
-          className="mt-2 text-xs text-board-text-tertiary underline hover:text-board-text-secondary transition-colors"
-        >
-          Change selection
-        </button>
-      </div>
 
       <textarea
         className="w-full rounded-xl border border-board-border bg-board-surface px-4 py-3 text-sm text-board-text placeholder-board-text-tertiary focus:outline-none focus:ring-2 focus:ring-board-accent/40 resize-none transition-shadow"
@@ -73,12 +39,28 @@ export function ProjectInput() {
       </div>
 
       <button
-        onClick={handleSubmit}
-        disabled={!projectBrief.trim()}
-        className="mt-4 w-full rounded-xl bg-board-accent px-6 py-3 text-sm font-semibold text-board-accent-contrast transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+        onClick={() => autoSelectPersonas()}
+        disabled={!hasContent || autoSelectLoading}
+        className="mt-4 w-full rounded-xl bg-board-accent px-6 py-3 text-sm font-semibold text-board-accent-contrast transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
       >
-        Consult the Team
+        {autoSelectLoading ? (
+          <>
+            <span className="h-3 w-3 rounded-full border-2 border-board-accent-contrast/40 border-t-board-accent-contrast animate-spin" />
+            Selecting team…
+          </>
+        ) : (
+          "Auto-Select Team →"
+        )}
       </button>
+
+      <div className="mt-3 text-center">
+        <button
+          onClick={() => setStep("persona_select")}
+          className="text-xs text-board-text-tertiary underline hover:text-board-text-secondary transition-colors"
+        >
+          or select manually →
+        </button>
+      </div>
     </div>
   );
 }

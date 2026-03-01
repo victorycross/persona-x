@@ -22,6 +22,8 @@ interface BoardBriefDisplayProps {
   profiles: PersonaProfile[];
   briefLoading?: boolean;
   onBack?: () => void;
+  onImprove?: () => void;
+  improving?: boolean;
 }
 
 export function BoardBriefDisplay({
@@ -30,6 +32,8 @@ export function BoardBriefDisplay({
   profiles,
   briefLoading,
   onBack,
+  onImprove,
+  improving,
 }: BoardBriefDisplayProps) {
   const [expandedAdvisor, setExpandedAdvisor] = useState<string | null>(null);
 
@@ -40,16 +44,27 @@ export function BoardBriefDisplay({
   return (
     <div className="animate-fade-in space-y-8">
       {/* Header */}
-      <div>
-        <p className="text-xs uppercase tracking-widest text-board-text-tertiary font-sans">
-          Synthesis
-        </p>
-        <h2 className="text-2xl font-serif text-board-text mt-1">
-          Board Brief
-        </h2>
-        <p className="text-xs text-board-text-tertiary mt-1 font-sans">
-          Synthesised from {responses.length} perspectives
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-xs uppercase tracking-widest text-board-text-tertiary font-sans">
+            Synthesis
+          </p>
+          <h2 className="text-2xl font-serif text-board-text mt-1">
+            Board Brief
+          </h2>
+          <p className="text-xs text-board-text-tertiary mt-1 font-sans">
+            Synthesised from {responses.length} perspectives
+          </p>
+        </div>
+        {onImprove && (
+          <button
+            onClick={onImprove}
+            disabled={improving || briefLoading || !brief}
+            className="shrink-0 rounded-lg border border-board-border bg-board-surface px-3 py-1.5 text-xs font-medium text-board-text-secondary transition-colors hover:border-board-accent/40 hover:text-board-text disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {improving ? "Improving…" : "Improve ✦"}
+          </button>
+        )}
       </div>
 
       {/* Back button */}

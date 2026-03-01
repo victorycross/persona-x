@@ -68,7 +68,7 @@ Synthesise these perspectives into a Team Brief. Output valid JSON only.`;
   return parseTeamBrief(result.content);
 }
 
-function parseTeamBrief(content: string): TeamBrief {
+export function parseTeamBrief(content: string): TeamBrief {
   const jsonMatch = content.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
   const jsonStr = jsonMatch?.[1]?.trim() ?? content.trim();
 

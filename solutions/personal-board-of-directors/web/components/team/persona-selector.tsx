@@ -15,7 +15,7 @@ const STANCE_OPTIONS: { value: PersonaStance; label: string }[] = [
 ];
 
 export function PersonaSelector() {
-  const { selectedPersonaIds, togglePersona, setStep, personaStances, setPersonaStance } =
+  const { selectedPersonaIds, togglePersona, setStep, personaStances, setPersonaStance, startFounderSession } =
     useTeamContext();
 
   const count = selectedPersonaIds.length;
@@ -24,6 +24,12 @@ export function PersonaSelector() {
 
   return (
     <div className="animate-fade-in">
+      <button
+        onClick={() => setStep("project_input")}
+        className="mb-4 text-sm text-board-text-tertiary hover:text-board-text-secondary transition-colors"
+      >
+        ← Edit project brief
+      </button>
       <h2 className="text-2xl font-serif text-board-text mb-1">
         Assemble Your Software Team
       </h2>
@@ -149,11 +155,11 @@ export function PersonaSelector() {
             )}
           </div>
           <button
-            onClick={() => setStep("project_input")}
+            onClick={() => startFounderSession()}
             disabled={!canContinue}
             className="rounded-xl bg-board-accent px-5 py-2.5 text-sm font-semibold text-board-accent-contrast transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
           >
-            Continue →
+            Consult the Team →
           </button>
         </div>
       </div>

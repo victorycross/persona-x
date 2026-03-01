@@ -42,7 +42,7 @@ function strengthBadge(strength: string): string {
 }
 
 export function TeamBriefDisplay() {
-  const { teamBrief, restartSession, setStep, responses } = useTeamContext();
+  const { teamBrief, restartSession, setStep, responses, improveBrief, improvingBrief } = useTeamContext();
 
   if (!teamBrief) {
     return (
@@ -56,6 +56,18 @@ export function TeamBriefDisplay() {
 
   return (
     <div className="animate-fade-in space-y-6">
+      {/* Header with Improve button */}
+      <div className="flex items-center justify-between">
+        <div />
+        <button
+          onClick={() => improveBrief()}
+          disabled={improvingBrief}
+          className="rounded-lg border border-board-border bg-board-surface px-3 py-1.5 text-xs font-medium text-board-text-secondary transition-colors hover:border-board-accent/40 hover:text-board-text disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {improvingBrief ? "Improving…" : "Improve ✦"}
+        </button>
+      </div>
+
       {/* Verdict */}
       <div className={`rounded-xl border p-6 ${verdictColour(verdict.recommendation)}`}>
         <p className="text-xs font-medium uppercase tracking-wide opacity-70 mb-1">
