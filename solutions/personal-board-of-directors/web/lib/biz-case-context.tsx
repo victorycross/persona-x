@@ -14,6 +14,7 @@ import type {
   MessageRole,
   ChallengeEvent,
   GenerateEvent,
+  ProposeEvent,
 } from "./biz-case-types";
 import { INTERVIEW_QUESTIONS } from "./biz-case-questions";
 import { TEAM_PERSONA_CATALOGUE } from "./team-personas";
@@ -31,10 +32,12 @@ interface BizCaseContextValue {
   sessionError: string | null;
   interviewComplete: boolean;
   isImproving: boolean;
+  isProposing: boolean;
   startInterview(): void;
   submitAnswer(): void;
   generateCase(): void;
   improveNarrative(): void;
+  proposeAnswer(): void;
   restartSession(): void;
 }
 
@@ -94,6 +97,7 @@ export function BizCaseProvider({ children }: { children: ReactNode }) {
   const [sessionError, setSessionError] = useState<string | null>(null);
   const [interviewComplete, setInterviewComplete] = useState(false);
   const [isImproving, setIsImproving] = useState(false);
+  const [isProposing, setIsProposing] = useState(false);
 
   const togglePersona = useCallback((id: string) => {
     setSelectedPersonaIds((prev) =>
@@ -343,6 +347,47 @@ export function BizCaseProvider({ children }: { children: ReactNode }) {
     }
   }, [narrativeContent]);
 
+  const proposeAnswer = useCallback(async () => {
+    if (isStreaming || isProposing || interviewComplete) return;
+
+    const qIdx = currentQuestionIndex;
+    const question = INTERVIEW_QUESTIONS[qIdx];
+    const priorAnswers = answers
+      .filter((a) => a.questionIndex < qIdx)
+      .map((a) => ({ question: a.question, answer: a.answer }));
+
+    setIsProposing(true);
+    setUserInput("");
+
+    try {
+      const res = await fetch("/api/biz-case/propose", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: question.prompt, priorAnswers }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error((data as { error?: string }).error ?? `HTTP ${res.status}`);
+      }
+
+      await consumeSSE<ProposeEvent>(res, (event) => {
+        if (event.type === "propose_token") {
+          setUserInput((prev) => prev + event.token);
+        } else if (event.type === "propose_complete") {
+          return true;
+        } else if (event.type === "error") {
+          throw new Error(event.message);
+        }
+      });
+    } catch (err) {
+      setSessionError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setIsProposing(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isStreaming, isProposing, interviewComplete, currentQuestionIndex, answers]);
+
   const restartSession = useCallback(() => {
     setStep("persona_pick");
     setSelectedPersonaIds([]);
@@ -355,6 +400,7 @@ export function BizCaseProvider({ children }: { children: ReactNode }) {
     setSessionError(null);
     setInterviewComplete(false);
     setIsImproving(false);
+    setIsProposing(false);
   }, []);
 
   return (
@@ -372,10 +418,12 @@ export function BizCaseProvider({ children }: { children: ReactNode }) {
         sessionError,
         interviewComplete,
         isImproving,
+        isProposing,
         startInterview,
         submitAnswer,
         generateCase,
         improveNarrative,
+        proposeAnswer,
         restartSession,
       }}
     >

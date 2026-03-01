@@ -78,9 +78,11 @@ export function Interview() {
     userInput,
     setUserInput,
     isStreaming,
+    isProposing,
     interviewComplete,
     submitAnswer,
     generateCase,
+    proposeAnswer,
   } = useBizCaseContext();
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -104,13 +106,14 @@ export function Interview() {
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
-      if (userInput.trim() && !isStreaming) {
+      if (userInput.trim() && !isStreaming && !isProposing) {
         void submitAnswer();
       }
     }
   }
 
-  const canSubmit = userInput.trim().length > 0 && !isStreaming;
+  const isBusy = isStreaming || isProposing;
+  const canSubmit = userInput.trim().length > 0 && !isBusy;
 
   return (
     <div className="flex flex-col h-[calc(100vh-180px)] min-h-[500px]">
@@ -147,22 +150,45 @@ export function Interview() {
 
         {!interviewComplete && (
           <>
-            <textarea
-              ref={textareaRef}
-              rows={3}
-              maxLength={2000}
-              disabled={isStreaming}
-              value={userInput}
-              onChange={(e) => setUserInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={
-                isStreaming
-                  ? "Waiting for response…"
-                  : "Your answer… (Cmd+Enter to submit)"
-              }
-              className="w-full resize-none rounded-xl border border-board-border bg-board-surface px-4 py-3 text-sm text-board-text placeholder:text-board-text-tertiary focus:border-board-accent/50 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            />
-            <div className="flex justify-end">
+            <div className="relative">
+              <textarea
+                ref={textareaRef}
+                rows={3}
+                maxLength={2000}
+                disabled={isStreaming}
+                value={userInput}
+                onChange={(e) => setUserInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={
+                  isStreaming
+                    ? "Waiting for response…"
+                    : isProposing
+                    ? "Drafting a proposed answer…"
+                    : "Your answer… (Cmd+Enter to submit)"
+                }
+                className="w-full resize-none rounded-xl border border-board-border bg-board-surface px-4 py-3 text-sm text-board-text placeholder:text-board-text-tertiary focus:border-board-accent/50 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              />
+              {isProposing && userInput && (
+                <span className="pointer-events-none absolute bottom-3 right-3">
+                  <span className="inline-block w-0.5 h-3.5 bg-board-text-tertiary animate-blink" />
+                </span>
+              )}
+            </div>
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => void proposeAnswer()}
+                disabled={isBusy}
+                className="rounded-lg border border-board-border bg-board-surface px-3 py-1.5 text-xs font-medium text-board-text-secondary transition-colors hover:border-board-accent/40 hover:text-board-text disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
+              >
+                {isProposing ? (
+                  <>
+                    <span className="h-2.5 w-2.5 rounded-full border-2 border-board-text-tertiary/40 border-t-board-text-secondary animate-spin" />
+                    Proposing…
+                  </>
+                ) : (
+                  "Propose Answer ✦"
+                )}
+              </button>
               <button
                 onClick={() => void submitAnswer()}
                 disabled={!canSubmit}

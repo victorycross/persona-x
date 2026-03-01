@@ -33,3 +33,8 @@ export type GenerateEvent =
   | { type: "narrative_token"; token: string }
   | { type: "narrative_complete" }
   | { type: "error"; message: string };
+
+export type ProposeEvent =
+  | { type: "propose_token"; token: string }
+  | { type: "propose_complete" }
+  | { type: "error"; message: string };
