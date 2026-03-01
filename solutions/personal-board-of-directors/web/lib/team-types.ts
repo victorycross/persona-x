@@ -43,6 +43,13 @@ export interface TeamBrief {
   };
 }
 
+export interface ProjectResources {
+  budget: string;
+  team: string;
+  specialties: string;
+  existingTools: string;
+}
+
 export type SessionStatus = "idle" | "loading" | "streaming" | "complete" | "error";
 
 export interface PersonaResponse {

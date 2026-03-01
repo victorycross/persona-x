@@ -9,6 +9,8 @@ export function ProjectInput() {
   const {
     projectBrief,
     setProjectBrief,
+    resources,
+    setResources,
     autoSelectLoading,
     autoSelectPersonas,
     setStep,
@@ -38,10 +40,36 @@ export function ProjectInput() {
         <span>{projectBrief.length.toLocaleString()} / 5,000 characters</span>
       </div>
 
+      {/* Optional resource fields */}
+      <div className="mt-5">
+        <p className="text-xs text-board-text-tertiary uppercase tracking-wide mb-3">
+          Available resources (optional)
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {[
+            { label: "Budget", field: "budget" as const, placeholder: "e.g. $50k, limited, TBD" },
+            { label: "Team", field: "team" as const, placeholder: "e.g. 2 developers, solo founder" },
+            { label: "Specialties", field: "specialties" as const, placeholder: "e.g. React, Node.js, ML expertise" },
+            { label: "Existing tools", field: "existingTools" as const, placeholder: "e.g. AWS, Xero, existing CRM" },
+          ].map(({ label, field, placeholder }) => (
+            <div key={field}>
+              <label className="block text-xs text-board-text-tertiary mb-1">{label}</label>
+              <input
+                type="text"
+                className="w-full rounded-lg border border-board-border bg-board-surface px-3 py-2 text-sm text-board-text placeholder-board-text-tertiary focus:outline-none focus:ring-2 focus:ring-board-accent/40"
+                placeholder={placeholder}
+                value={resources[field]}
+                onChange={(e) => setResources({ ...resources, [field]: e.target.value })}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+
       <button
         onClick={() => autoSelectPersonas()}
         disabled={!hasContent || autoSelectLoading}
-        className="mt-4 w-full rounded-xl bg-board-accent px-6 py-3 text-sm font-semibold text-board-accent-contrast transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        className="mt-6 w-full rounded-xl bg-board-accent px-6 py-3 text-sm font-semibold text-board-accent-contrast transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
       >
         {autoSelectLoading ? (
           <>

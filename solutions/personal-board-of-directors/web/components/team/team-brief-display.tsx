@@ -1,6 +1,7 @@
 "use client";
 
 import { useTeamContext } from "@/lib/team-context";
+import { ROLE_BADGE_COLORS, DEFAULT_BADGE_COLOR } from "@/lib/constants";
 
 function verdictColour(rec: string): string {
   switch (rec) {
@@ -42,7 +43,18 @@ function strengthBadge(strength: string): string {
 }
 
 export function TeamBriefDisplay() {
-  const { teamBrief, restartSession, setStep, responses, improveBrief, improvingBrief } = useTeamContext();
+  const {
+    teamBrief,
+    restartSession,
+    setStep,
+    responses,
+    improveBrief,
+    improvingBrief,
+    founderVisionContent,
+    founderVisionLoading,
+    founderVisionComplete,
+    getFounderVision,
+  } = useTeamContext();
 
   if (!teamBrief) {
     return (
@@ -53,6 +65,7 @@ export function TeamBriefDisplay() {
   }
 
   const { alignment, critical_risks, build_priorities, unknowns, verdict } = teamBrief;
+  const founderBadgeColor = ROLE_BADGE_COLORS["integrator"] ?? DEFAULT_BADGE_COLOR;
 
   return (
     <div className="animate-fade-in space-y-6">
@@ -182,6 +195,55 @@ export function TeamBriefDisplay() {
         >
           New Project
         </button>
+      </div>
+
+      {/* Founder Vision section */}
+      <div className="pt-2">
+        <div className="border-t border-board-border mb-6" />
+
+        {!founderVisionLoading && !founderVisionComplete && (
+          <div>
+            <div className="mb-4">
+              <h3 className="text-base font-semibold text-board-text mb-1">Founder&apos;s Vision</h3>
+              <p className="text-sm text-board-text-secondary">
+                Invite the Founder to review the specialist case and chart the path forward.
+              </p>
+            </div>
+            <button
+              onClick={() => getFounderVision()}
+              className="w-full rounded-xl bg-board-accent px-6 py-3 text-sm font-semibold text-board-accent-contrast transition-opacity hover:opacity-90"
+            >
+              Get Founder&apos;s Vision →
+            </button>
+          </div>
+        )}
+
+        {(founderVisionLoading || founderVisionComplete) && (
+          <div
+            className={[
+              "rounded-xl border p-5",
+              founderVisionComplete
+                ? "border-board-accent/30 bg-board-accent/5"
+                : "border-board-border bg-board-surface",
+            ].join(" ")}
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-sm font-semibold text-board-text">Founder</span>
+              <span className={`rounded-full border px-1.5 py-0.5 text-[10px] font-medium ${founderBadgeColor}`}>
+                integrator
+              </span>
+              {founderVisionLoading && (
+                <span className="h-3 w-3 rounded-full border-2 border-board-accent/40 border-t-board-accent animate-spin ml-1" />
+              )}
+            </div>
+            <p className="text-sm text-board-text-secondary whitespace-pre-wrap leading-relaxed">
+              {founderVisionContent}
+              {founderVisionLoading && founderVisionContent && (
+                <span className="inline-block w-0.5 h-4 bg-board-text-secondary ml-0.5 animate-blink" />
+              )}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

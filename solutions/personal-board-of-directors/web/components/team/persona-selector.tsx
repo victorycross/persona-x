@@ -14,6 +14,8 @@ const STANCE_OPTIONS: { value: PersonaStance; label: string }[] = [
   { value: "critical", label: "Critical" },
 ];
 
+const SPECIALISTS = TEAM_PERSONA_CATALOGUE.filter((p) => p.id !== "founder");
+
 export function PersonaSelector() {
   const { selectedPersonaIds, togglePersona, setStep, personaStances, setPersonaStance, startFounderSession } =
     useTeamContext();
@@ -34,11 +36,11 @@ export function PersonaSelector() {
         Assemble Your Software Team
       </h2>
       <p className="text-sm text-board-text-secondary mb-6">
-        Select the team members whose perspectives you want on your project. Each brings a distinct role-based lens. Minimum 2 required.
+        Select the specialists whose perspectives you want on your project. Each brings a distinct role-based lens. Minimum 2 required.
       </p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
-        {TEAM_PERSONA_CATALOGUE.map((persona) => {
+        {SPECIALISTS.map((persona) => {
           const isSelected = selectedPersonaIds.includes(persona.id);
           const badgeColor =
             ROLE_BADGE_COLORS[persona.contributionType] ?? DEFAULT_BADGE_COLOR;
@@ -135,6 +137,29 @@ export function PersonaSelector() {
             </div>
           );
         })}
+      </div>
+
+      {/* Locked Founder card */}
+      <div className="mb-6">
+        <div className="rounded-xl border border-board-border bg-board-surface opacity-50 cursor-default px-4 py-4">
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 border-board-border bg-board-bg" aria-hidden />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-0.5">
+                <span className="text-sm font-semibold text-board-text">Founder</span>
+                <span className={`rounded-full border px-1.5 py-0.5 text-[10px] font-medium ${ROLE_BADGE_COLORS["integrator"] ?? DEFAULT_BADGE_COLOR}`}>
+                  integrator
+                </span>
+                <span className="rounded-full border border-board-border px-1.5 py-0.5 text-[10px] font-medium text-board-text-tertiary">
+                  joins later
+                </span>
+              </div>
+              <p className="text-xs text-board-text-secondary leading-snug">
+                Joins after the business case is built to chart the path forward.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Bottom bar */}

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { checkApiKey } from "@/lib/api-error";
 import { createClient, sendMessage } from "@persona-x/llm/client.js";
 import { TEAM_PERSONA_CATALOGUE } from "@/lib/team-personas";
-import type { PersonaStance, PersonaStanceMap } from "@/lib/team-types";
+import type { PersonaStance, PersonaStanceMap, ProjectResources } from "@/lib/team-types";
 
 export const maxDuration = 30;
 
@@ -11,7 +11,6 @@ const VALID_STANCES: PersonaStance[] = ["constructive", "balanced", "critical"];
 const SYSTEM_PROMPT = `You are an expert software project advisor. Given a project brief, select the most relevant team members from the available catalogue and assign each a recommended stance.
 
 Available team members:
-- founder: Founder — Product vision, business case, and speed-to-market decisions.
 - frontend-developer: Frontend Developer — Client-side architecture, component design, and browser performance.
 - backend-developer: Backend Developer — API design, data modelling, and server-side reliability.
 - software-engineer: Software Engineer — System architecture, code quality, and long-term maintainability.
@@ -34,16 +33,22 @@ Output ONLY valid JSON in this exact format:
   }
 }`;
 
-const VALID_IDS = new Set(TEAM_PERSONA_CATALOGUE.map((p) => p.id));
+const VALID_IDS = new Set(
+  TEAM_PERSONA_CATALOGUE.filter((p) => p.id !== "founder").map((p) => p.id)
+);
 
 export async function POST(request: Request): Promise<NextResponse> {
   const keyError = checkApiKey();
   if (keyError) return keyError;
 
   let projectBrief: string;
+  let resources: ProjectResources | undefined;
   try {
-    const body = await request.json() as { projectBrief?: unknown };
+    const body = await request.json() as { projectBrief?: unknown; resources?: unknown };
     projectBrief = typeof body.projectBrief === "string" ? body.projectBrief.trim() : "";
+    resources = typeof body.resources === "object" && body.resources !== null
+      ? body.resources as ProjectResources
+      : undefined;
   } catch {
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
   }
@@ -52,6 +57,16 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ error: "projectBrief is required." }, { status: 400 });
   }
 
+  // Build combined brief with non-empty resource fields
+  const resourceLines: string[] = [];
+  if (resources?.budget?.trim()) resourceLines.push(`Budget: ${resources.budget.trim()}`);
+  if (resources?.team?.trim()) resourceLines.push(`Team: ${resources.team.trim()}`);
+  if (resources?.specialties?.trim()) resourceLines.push(`Specialties: ${resources.specialties.trim()}`);
+  if (resources?.existingTools?.trim()) resourceLines.push(`Existing tools: ${resources.existingTools.trim()}`);
+  const combinedBrief = resourceLines.length > 0
+    ? `${projectBrief}\n\n--- Available Resources ---\n${resourceLines.join("\n")}`
+    : projectBrief;
+
   try {
     const client = createClient();
     const result = await sendMessage(client, {
@@ -59,7 +74,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       messages: [
         {
           role: "user",
-          content: `Project brief:\n\n"${projectBrief}"\n\nSelect the most relevant team members and their recommended stances. Output valid JSON only.`,
+          content: `Project brief:\n\n"${combinedBrief}"\n\nSelect the most relevant team members and their recommended stances. Output valid JSON only.`,
         },
       ],
       maxTokens: 512,
@@ -77,11 +92,11 @@ export async function POST(request: Request): Promise<NextResponse> {
       return NextResponse.json({ error: "Failed to parse AI response." }, { status: 500 });
     }
 
-    // Validate and filter persona IDs
+    // Validate and filter persona IDs — founder is always excluded
     const rawIds = Array.isArray(parsed.selectedPersonaIds) ? parsed.selectedPersonaIds : [];
     const selectedPersonaIds = rawIds
       .map(String)
-      .filter((id) => VALID_IDS.has(id));
+      .filter((id) => VALID_IDS.has(id) && id !== "founder");
 
     // Validate stances, defaulting invalid ones to "balanced"
     const rawStances = typeof parsed.stances === "object" && parsed.stances !== null

@@ -19,6 +19,7 @@ import type {
   PersonaStance,
   PersonaStanceMap,
   CompetitiveAdvantageVerdict,
+  ProjectResources,
 } from "./team-types";
 
 interface TeamContextValue {
@@ -30,6 +31,9 @@ interface TeamContextValue {
 
   projectBrief: string;
   setProjectBrief(s: string): void;
+
+  resources: ProjectResources;
+  setResources(r: ProjectResources): void;
 
   sessionStatus: SessionStatus;
   responses: PersonaResponse[];
@@ -53,6 +57,11 @@ interface TeamContextValue {
   improvingBrief: boolean;
   improveBrief(): void;
 
+  founderVisionContent: string;
+  founderVisionLoading: boolean;
+  founderVisionComplete: boolean;
+  getFounderVision(): void;
+
   startFounderSession(): void;
   confirmCompetitiveAdvantage(verdict: CompetitiveAdvantageVerdict): void;
   startRemainingSession(): void;
@@ -65,6 +74,25 @@ export function useTeamContext(): TeamContextValue {
   const ctx = useContext(TeamContext);
   if (!ctx) throw new Error("useTeamContext must be used within TeamProvider");
   return ctx;
+}
+
+const EMPTY_RESOURCES: ProjectResources = {
+  budget: "",
+  team: "",
+  specialties: "",
+  existingTools: "",
+};
+
+/** Build combined brief from projectBrief + non-empty resource fields. */
+function buildCombinedBrief(projectBrief: string, resources: ProjectResources): string {
+  const lines: string[] = [];
+  if (resources.budget.trim()) lines.push(`Budget: ${resources.budget.trim()}`);
+  if (resources.team.trim()) lines.push(`Team: ${resources.team.trim()}`);
+  if (resources.specialties.trim()) lines.push(`Specialties: ${resources.specialties.trim()}`);
+  if (resources.existingTools.trim()) lines.push(`Existing tools: ${resources.existingTools.trim()}`);
+
+  if (lines.length === 0) return projectBrief;
+  return `${projectBrief}\n\n--- Available Resources ---\n${lines.join("\n")}`;
 }
 
 /** Consume an SSE ReadableStream, calling onEvent for each parsed event. */
@@ -168,6 +196,7 @@ export function TeamProvider({ children }: { children: ReactNode }) {
   const [step, setStep] = useState<TeamFlowStep>("project_input");
   const [selectedPersonaIds, setSelectedPersonaIds] = useState<string[]>([]);
   const [projectBrief, setProjectBrief] = useState("");
+  const [resources, setResources] = useState<ProjectResources>(EMPTY_RESOURCES);
 
   const [sessionStatus, setSessionStatus] = useState<SessionStatus>("idle");
   const [responses, setResponses] = useState<PersonaResponse[]>([]);
@@ -183,6 +212,10 @@ export function TeamProvider({ children }: { children: ReactNode }) {
   const [sessionPhase, setSessionPhase] = useState<"founder" | "team">("founder");
   const [autoSelectLoading, setAutoSelectLoading] = useState(false);
   const [improvingBrief, setImprovingBrief] = useState(false);
+
+  const [founderVisionContent, setFounderVisionContent] = useState("");
+  const [founderVisionLoading, setFounderVisionLoading] = useState(false);
+  const [founderVisionComplete, setFounderVisionComplete] = useState(false);
 
   const abortRef = useRef<AbortController | null>(null);
 
@@ -217,63 +250,10 @@ export function TeamProvider({ children }: { children: ReactNode }) {
     setFounderResponse(null);
     setCompetitiveAdvantage(null);
 
-    const hasFounder = selectedPersonaIds.includes("founder");
+    const combinedBrief = buildCombinedBrief(projectBrief, resources);
 
-    if (!hasFounder) {
-      // Single-phase fallback — no Founder in team
-      setSessionPhase("team");
-      setStep("consulting_team");
-
-      (async () => {
-        try {
-          const res = await fetch("/api/team/session", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              projectBrief,
-              selectedPersonaIds,
-              founderOnly: false,
-              personaStances,
-            }),
-            signal: controller.signal,
-          });
-
-          if (!res.ok) {
-            const data = await res.json().catch(() => ({}));
-            throw new Error(
-              (data as { error?: string }).error ?? `HTTP ${res.status}`
-            );
-          }
-
-          setSessionStatus("streaming");
-
-          await consumeSSEStream(res, controller.signal, (event) => {
-            applyTeamEvent(event, {
-              setResponses,
-              setActivePersonaId,
-              setTeamBrief,
-              setSessionError,
-              setSessionStatus,
-              onComplete() {
-                setStep("team_review");
-                setCurrentMemberIndex(0);
-              },
-            });
-          });
-
-          abortRef.current = null;
-        } catch (err) {
-          if ((err as Error).name === "AbortError") return;
-          setSessionError(err instanceof Error ? err.message : String(err));
-          setSessionStatus("error");
-          abortRef.current = null;
-        }
-      })();
-      return;
-    }
-
-    // Phase 1 — Founder only
-    setSessionPhase("founder");
+    // Single-phase — specialists only (Founder is always excluded now)
+    setSessionPhase("team");
     setStep("consulting_team");
 
     (async () => {
@@ -282,8 +262,9 @@ export function TeamProvider({ children }: { children: ReactNode }) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            projectBrief,
-            founderOnly: true,
+            projectBrief: combinedBrief,
+            selectedPersonaIds,
+            founderOnly: false,
             personaStances,
           }),
           signal: controller.signal,
@@ -299,48 +280,17 @@ export function TeamProvider({ children }: { children: ReactNode }) {
         setSessionStatus("streaming");
 
         await consumeSSEStream(res, controller.signal, (event) => {
-          if (event.type === "session_start") {
-            // already streaming
-          } else if (event.type === "persona_start") {
-            setActivePersonaId(event.personaId);
-            setResponses((prev) => [
-              ...prev,
-              {
-                personaId: event.personaId,
-                personaName: event.personaName,
-                content: "",
-                isComplete: false,
-              },
-            ]);
-          } else if (event.type === "persona_token") {
-            setResponses((prev) =>
-              prev.map((r) =>
-                r.personaId === event.personaId
-                  ? { ...r, content: r.content + event.token }
-                  : r
-              )
-            );
-          } else if (event.type === "persona_complete") {
-            setResponses((prev) =>
-              prev.map((r) =>
-                r.personaId === event.personaId ? { ...r, isComplete: true } : r
-              )
-            );
-            setActivePersonaId(null);
-          } else if (event.type === "competitive_advantage_verdict") {
-            setCompetitiveAdvantage(event.verdict);
-          } else if (event.type === "founder_phase_complete") {
-            setSessionStatus("complete");
-            setResponses((prev) => {
-              const fr = prev.find((r) => r.personaId === "founder") ?? null;
-              setFounderResponse(fr);
-              return prev;
-            });
-            setStep("founder_gate");
-          } else if (event.type === "error") {
-            setSessionError(event.message);
-            setSessionStatus("error");
-          }
+          applyTeamEvent(event, {
+            setResponses,
+            setActivePersonaId,
+            setTeamBrief,
+            setSessionError,
+            setSessionStatus,
+            onComplete() {
+              setStep("team_review");
+              setCurrentMemberIndex(0);
+            },
+          });
         });
 
         abortRef.current = null;
@@ -352,7 +302,7 @@ export function TeamProvider({ children }: { children: ReactNode }) {
       }
     })();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [projectBrief, selectedPersonaIds, personaStances]);
+  }, [projectBrief, resources, selectedPersonaIds, personaStances]);
 
   const startRemainingSession = useCallback(() => {
     if (abortRef.current) abortRef.current.abort();
@@ -360,6 +310,7 @@ export function TeamProvider({ children }: { children: ReactNode }) {
     abortRef.current = controller;
 
     const remainingSlugs = selectedPersonaIds.filter((id) => id !== "founder");
+    const combinedBrief = buildCombinedBrief(projectBrief, resources);
 
     setSessionPhase("team");
     setStep("consulting_team");
@@ -375,7 +326,7 @@ export function TeamProvider({ children }: { children: ReactNode }) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            projectBrief,
+            projectBrief: combinedBrief,
             selectedPersonaIds: remainingSlugs,
             founderOnly: false,
             personaStances,
@@ -425,6 +376,7 @@ export function TeamProvider({ children }: { children: ReactNode }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     projectBrief,
+    resources,
     selectedPersonaIds,
     personaStances,
     competitiveAdvantage,
@@ -439,7 +391,7 @@ export function TeamProvider({ children }: { children: ReactNode }) {
       const res = await fetch("/api/team/auto-select", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ projectBrief: brief }),
+        body: JSON.stringify({ projectBrief: brief, resources }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -454,7 +406,8 @@ export function TeamProvider({ children }: { children: ReactNode }) {
     } finally {
       setAutoSelectLoading(false);
     }
-  }, [projectBrief]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectBrief, resources]);
 
   const improveBrief = useCallback(async () => {
     if (!teamBrief) return;
@@ -481,6 +434,53 @@ export function TeamProvider({ children }: { children: ReactNode }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [teamBrief, projectBrief]);
 
+  const getFounderVision = useCallback(() => {
+    if (!teamBrief || founderVisionLoading || founderVisionComplete) return;
+
+    setFounderVisionLoading(true);
+    setFounderVisionContent("");
+
+    const controller = new AbortController();
+
+    (async () => {
+      try {
+        const res = await fetch("/api/team/founder-vision", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            projectBrief,
+            resources,
+            teamBrief,
+            specialistResponses: responses.map((r) => ({
+              personaName: r.personaName,
+              content: r.content,
+            })),
+          }),
+          signal: controller.signal,
+        });
+
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error((data as { error?: string }).error ?? `HTTP ${res.status}`);
+        }
+
+        await consumeSSEStream(res, controller.signal, (event) => {
+          if (event.type === "persona_token") {
+            setFounderVisionContent((prev) => prev + event.token);
+          } else if (event.type === "session_complete") {
+            setFounderVisionComplete(true);
+          }
+        });
+      } catch (err) {
+        if ((err as Error).name === "AbortError") return;
+        setSessionError(err instanceof Error ? err.message : String(err));
+      } finally {
+        setFounderVisionLoading(false);
+      }
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [teamBrief, founderVisionLoading, founderVisionComplete, projectBrief, resources, responses]);
+
   const restartSession = useCallback(() => {
     if (abortRef.current) {
       abortRef.current.abort();
@@ -489,6 +489,7 @@ export function TeamProvider({ children }: { children: ReactNode }) {
     setStep("project_input");
     setSelectedPersonaIds([]);
     setProjectBrief("");
+    setResources(EMPTY_RESOURCES);
     setSessionStatus("idle");
     setResponses([]);
     setActivePersonaId(null);
@@ -499,6 +500,9 @@ export function TeamProvider({ children }: { children: ReactNode }) {
     setFounderResponse(null);
     setCompetitiveAdvantage(null);
     setSessionPhase("founder");
+    setFounderVisionContent("");
+    setFounderVisionLoading(false);
+    setFounderVisionComplete(false);
   }, []);
 
   return (
@@ -510,6 +514,8 @@ export function TeamProvider({ children }: { children: ReactNode }) {
         togglePersona,
         projectBrief,
         setProjectBrief,
+        resources,
+        setResources,
         sessionStatus,
         responses,
         activePersonaId,
@@ -526,6 +532,10 @@ export function TeamProvider({ children }: { children: ReactNode }) {
         autoSelectPersonas,
         improvingBrief,
         improveBrief,
+        founderVisionContent,
+        founderVisionLoading,
+        founderVisionComplete,
+        getFounderVision,
         startFounderSession,
         confirmCompetitiveAdvantage,
         startRemainingSession,
