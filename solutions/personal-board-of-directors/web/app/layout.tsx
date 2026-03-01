@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import Link from "next/link";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SettingsModal } from "@/components/settings-modal";
 import { EngineNav } from "@/components/engine/engine-nav";
@@ -37,14 +38,14 @@ export default function RootLayout({
           </a>
           <header className="bg-board-surface/95 backdrop-blur-md border-b border-board-border shadow-sm px-6 py-5">
             <div className="mx-auto max-w-3xl flex items-center justify-between">
-              <div>
-                <h1 className="text-xl font-bold text-board-text tracking-tight">
+              <Link href="/" className="group">
+                <h1 className="text-xl font-bold text-board-text tracking-tight group-hover:text-board-accent transition-colors">
                   Persona-x
                 </h1>
                 <p className="text-xs text-board-text-secondary mt-0.5">
                   AI advisory frameworks for decisions that matter
                 </p>
-              </div>
+              </Link>
               <div className="flex items-center gap-3">
                 <EngineNav />
                 <SettingsModal />

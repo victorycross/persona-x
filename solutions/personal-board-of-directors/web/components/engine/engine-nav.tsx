@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const TABS = [
-  { label: "Board of Directors", href: "/" },
+  { label: "Board of Directors", href: "/board" },
   { label: "Software Team", href: "/decision-engine" },
   { label: "Business Case", href: "/business-case" },
 ] as const;
@@ -15,9 +15,7 @@ export function EngineNav() {
   return (
     <nav className="flex gap-1 rounded-lg bg-board-bg p-1" aria-label="App navigation">
       {TABS.map((tab) => {
-        const isActive = tab.href === "/"
-          ? pathname === "/"
-          : pathname.startsWith(tab.href);
+        const isActive = pathname.startsWith(tab.href);
 
         return (
           <Link
