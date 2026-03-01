@@ -55,7 +55,7 @@ function ChallengeMessage({
       <div className="max-w-[85%] w-full">
         <div className="mb-1 flex items-center gap-2">
           <span className="text-[10px] font-medium uppercase tracking-wide text-board-text-tertiary">
-            Challenge
+            Expert Input
           </span>
           {msg.personaName && (
             <span className="rounded-full bg-board-accent/10 px-2 py-0.5 text-[10px] font-semibold text-board-accent">

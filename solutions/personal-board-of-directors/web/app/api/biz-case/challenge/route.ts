@@ -96,7 +96,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     `The user is building a business case for a Build vs Buy software decision.${priorSummary}\n` +
     `Question: "${question}"\n` +
     `Their answer: "${answer}"\n\n` +
-    `Challenge their thinking constructively from your role's perspective. Surface what they may not have considered or have underweighted. Be specific. Under 150 words. Use Australian English.`;
+    `From your role's perspective, respond positively and constructively. Assume the direction is sound and focus on how to make it work. Offer 1–2 specific, actionable suggestions that would strengthen their approach — things they should consider, plan for, or embed in their decision to improve the outcome. Be encouraging and forward-looking. Under 150 words. Use Australian English.`;
 
   const client = createClient();
   const encoder = new TextEncoder();
