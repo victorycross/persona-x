@@ -1,5 +1,5 @@
 import path from "path";
-import { createClient } from "@persona-x/llm/client.js";
+import { createClient, sendMessage } from "@persona-x/llm/client.js";
 import { loadPersonasForPanel } from "@persona-x/runtime/loader.js";
 import { createPanelSession, determineSpeakingOrder } from "@persona-x/runtime/panel.js";
 import { RUBRIC_DIMENSIONS } from "@persona-x/schema/rubric.js";
@@ -7,7 +7,13 @@ import type { RubricDimensionName } from "@persona-x/schema/rubric.js";
 import type { LoadedPersona } from "@persona-x/runtime/interface.js";
 import { generateTeamBrief } from "./team-brief";
 import { LLM_MODEL } from "./constants";
-import type { TeamSessionEvent, PersonaResponse } from "./team-types";
+import type {
+  TeamSessionEvent,
+  PersonaResponse,
+  PersonaStance,
+  PersonaStanceMap,
+  CompetitiveAdvantageVerdict,
+} from "./team-types";
 
 const TEAM_PERSONA_DIR = path.join(process.cwd(), "personas", "team");
 
@@ -37,7 +43,9 @@ function identifyRubricInfluence(persona: LoadedPersona): RubricDimensionName[] 
 function buildPersonaUserMessage(
   projectBrief: string,
   persona: LoadedPersona,
-  priorResponses: PersonaResponse[]
+  priorResponses: PersonaResponse[],
+  stance: PersonaStance = "balanced",
+  competitiveAdvantage?: CompetitiveAdvantageVerdict
 ): string {
   const influence = identifyRubricInfluence(persona);
   const influenceNote = influence
@@ -48,6 +56,21 @@ function buildPersonaUserMessage(
     })
     .join("\n");
 
+  let stanceDirective = "";
+  if (stance === "constructive") {
+    stanceDirective =
+      "Stance directive: Frame your entire response around how this project can succeed. Lead with paths forward, not problems.\n\n";
+  } else if (stance === "critical") {
+    stanceDirective =
+      "Stance directive: Apply rigorous scrutiny. Prioritise surfacing risks and weaknesses that have not been challenged.\n\n";
+  }
+
+  let caFraming = "";
+  if (competitiveAdvantage === "yes") {
+    caFraming =
+      "The Founder has identified a clear competitive advantage. Your role is to provide practical guidance on how to build this effectively.\n\n";
+  }
+
   let message = `A software development team is reviewing the following project:
 
 "${projectBrief}"
@@ -56,7 +79,7 @@ Your role: ${persona.file.metadata.name}
 Your strongest rubric influences for this review:
 ${influenceNote}
 
-Provide your perspective as ${persona.file.metadata.name}. Be specific, concrete, and actionable. Structure your response with:
+${caFraming}${stanceDirective}Provide your perspective as ${persona.file.metadata.name}. Be specific, concrete, and actionable. Structure your response with:
 1. Your initial take on this project from your role's perspective
 2. Key concerns or risks you see from your vantage point
 3. Your specific recommendations for the team
@@ -74,13 +97,65 @@ Keep your response focused and under 400 words. Use Australian English spelling.
   return message;
 }
 
+async function extractCompetitiveAdvantageVerdict(
+  client: ReturnType<typeof createClient>,
+  founderContent: string
+): Promise<CompetitiveAdvantageVerdict> {
+  try {
+    const result = await sendMessage(client, {
+      system:
+        "You are analysing a Founder's project review. Based solely on their response, determine whether they believe the project has a clear competitive advantage. Reply with exactly one word: yes, no, or unsure. Output nothing else.",
+      messages: [
+        {
+          role: "user",
+          content: `Founder's response:\n\n${founderContent}\n\nDoes the Founder believe this project has a clear competitive advantage? Reply with one word: yes, no, or unsure.`,
+        },
+      ],
+      maxTokens: 5,
+      temperature: 0,
+    });
+
+    const word = result.content.trim().toLowerCase();
+    if (word === "yes" || word === "no" || word === "unsure") {
+      return word;
+    }
+    return "unsure";
+  } catch {
+    return "unsure";
+  }
+}
+
+export interface TeamSessionOptions {
+  projectBrief: string;
+  selectedSlugs: string[];
+  founderOnly?: boolean;
+  personaStances?: PersonaStanceMap;
+  competitiveAdvantage?: CompetitiveAdvantageVerdict;
+  initialPriorResponses?: PersonaResponse[];
+}
+
 /**
- * Run a complete team consultation session, returning a ReadableStream of SSE events.
+ * Run a team consultation session, returning a ReadableStream of SSE events.
+ *
+ * When founderOnly is true: streams only the Founder persona, extracts the
+ * competitive advantage verdict, emits competitive_advantage_verdict and
+ * founder_phase_complete, then closes.
+ *
+ * When founderOnly is false: streams all selected personas (prepending any
+ * initialPriorResponses), generates the Team Brief, and emits session_complete.
  */
 export function runTeamSession(
-  projectBrief: string,
-  selectedSlugs: string[]
+  options: TeamSessionOptions
 ): ReadableStream<Uint8Array> {
+  const {
+    projectBrief,
+    selectedSlugs,
+    founderOnly = false,
+    personaStances = {},
+    competitiveAdvantage,
+    initialPriorResponses = [],
+  } = options;
+
   const encoder = new TextEncoder();
   let activeStream: { abort(): void } | null = null;
   let cancelled = false;
@@ -108,7 +183,7 @@ export function runTeamSession(
 
         emit({ type: "session_start", personaCount: ordered.length });
 
-        const responses: PersonaResponse[] = [];
+        const responses: PersonaResponse[] = [...initialPriorResponses];
 
         for (const persona of ordered) {
           if (cancelled) break;
@@ -123,7 +198,14 @@ export function runTeamSession(
             role: persona.file.panel_role.contribution_type,
           });
 
-          const userMessage = buildPersonaUserMessage(projectBrief, persona, responses);
+          const stance: PersonaStance = personaStances[persona.id] ?? "balanced";
+          const userMessage = buildPersonaUserMessage(
+            projectBrief,
+            persona,
+            responses,
+            stance,
+            founderOnly ? undefined : competitiveAdvantage
+          );
           let fullContent = "";
 
           try {
@@ -171,6 +253,20 @@ export function runTeamSession(
           return;
         }
 
+        // Phase 1: founder-only — extract verdict and signal gate
+        if (founderOnly) {
+          const founderResponse = responses.find((r) => r.personaId === "founder");
+          const verdict = founderResponse
+            ? await extractCompetitiveAdvantageVerdict(client, founderResponse.content)
+            : "unsure";
+
+          emit({ type: "competitive_advantage_verdict", verdict });
+          emit({ type: "founder_phase_complete" });
+          controller.close();
+          return;
+        }
+
+        // Phase 2 (or single-phase fallback): generate brief and complete
         emit({ type: "brief_start" });
 
         try {

@@ -11,7 +11,7 @@ export function ProjectInput() {
     projectBrief,
     setProjectBrief,
     selectedPersonaIds,
-    startSession,
+    startFounderSession,
     setStep,
   } = useTeamContext();
 
@@ -24,7 +24,7 @@ export function ProjectInput() {
   function handleSubmit() {
     const trimmed = projectBrief.trim();
     if (!trimmed) return;
-    startSession();
+    startFounderSession();
   }
 
   return (

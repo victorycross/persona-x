@@ -3,10 +3,21 @@
 import { useTeamContext } from "@/lib/team-context";
 
 export function TeamLoading() {
-  const { responses, selectedPersonaIds, activePersonaId } = useTeamContext();
+  const {
+    responses,
+    selectedPersonaIds,
+    activePersonaId,
+    sessionPhase,
+  } = useTeamContext();
 
   const completedCount = responses.filter((r) => r.isComplete).length;
-  const totalCount = selectedPersonaIds.length;
+  const totalCount =
+    sessionPhase === "founder" ? 1 : Math.max(selectedPersonaIds.length - 1, 1);
+
+  const heading =
+    sessionPhase === "founder"
+      ? "Consulting the Founder…"
+      : "Convening your team…";
 
   const activeName = activePersonaId
     ? responses.find((r) => r.personaId === activePersonaId)?.personaName
@@ -23,9 +34,7 @@ export function TeamLoading() {
         <div className="absolute inset-0 h-3 w-3 rounded-full bg-board-accent animate-ping opacity-30" />
       </div>
 
-      <h2 className="text-2xl font-serif text-board-text">
-        Convening your software team…
-      </h2>
+      <h2 className="text-2xl font-serif text-board-text">{heading}</h2>
 
       {activeName ? (
         <p className="text-sm text-board-text-secondary mt-2">

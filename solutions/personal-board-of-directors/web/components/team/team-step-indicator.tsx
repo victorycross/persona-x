@@ -3,47 +3,52 @@
 import { useTeamContext } from "@/lib/team-context";
 import type { TeamFlowStep } from "@/lib/team-types";
 
-const STEPS: { key: TeamFlowStep; label: string }[] = [
+const STEPS: { key: TeamFlowStep; label: string; founderOnly?: boolean }[] = [
   { key: "persona_select", label: "Select Team" },
   { key: "project_input", label: "Describe Project" },
   { key: "consulting_team", label: "Consulting" },
+  { key: "founder_gate", label: "Founder Gate", founderOnly: true },
   { key: "team_review", label: "Review" },
   { key: "team_brief", label: "Team Brief" },
 ];
 
-const STEP_INDEX: Record<TeamFlowStep, number> = {
-  persona_select: 0,
-  project_input: 1,
-  consulting_team: 2,
-  team_review: 3,
-  team_brief: 4,
-};
 
 export function TeamStepIndicator() {
   const { step, currentMemberIndex, responses, selectedPersonaIds } =
     useTeamContext();
 
-  const activeIndex = STEP_INDEX[step];
+  const hasFounder = selectedPersonaIds.includes("founder");
+
+  const visibleSteps = STEPS.filter(
+    (s) => !s.founderOnly || hasFounder
+  );
+
+  // Recalculate active index within visible steps
+  const visibleActiveIndex = visibleSteps.findIndex((s) => s.key === step);
 
   return (
     <nav aria-label="Progress" className="mb-8">
       <div role="list" className="flex items-center justify-center gap-2 mb-2">
-        {STEPS.map((s, i) => (
+        {visibleSteps.map((s, i) => (
           <div
             key={s.key}
             role="listitem"
-            aria-current={i === activeIndex ? "step" : undefined}
+            aria-current={i === visibleActiveIndex ? "step" : undefined}
             className={`h-1.5 rounded-full transition-all duration-300 ${
-              i < activeIndex
+              i < visibleActiveIndex
                 ? "w-1.5 bg-board-accent"
-                : i === activeIndex
+                : i === visibleActiveIndex
                 ? "w-6 bg-board-accent"
                 : "w-1.5 bg-board-text-tertiary/40"
             }`}
           >
             <span className="sr-only">
               {s.label}
-              {i < activeIndex ? " (completed)" : i === activeIndex ? " (current)" : ""}
+              {i < visibleActiveIndex
+                ? " (completed)"
+                : i === visibleActiveIndex
+                ? " (current)"
+                : ""}
             </span>
           </div>
         ))}

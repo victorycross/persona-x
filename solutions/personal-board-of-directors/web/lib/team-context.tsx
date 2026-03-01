@@ -6,6 +6,8 @@ import {
   useState,
   useCallback,
   useRef,
+  type Dispatch,
+  type SetStateAction,
   type ReactNode,
 } from "react";
 import type {
@@ -14,6 +16,9 @@ import type {
   TeamSessionEvent,
   PersonaResponse,
   SessionStatus,
+  PersonaStance,
+  PersonaStanceMap,
+  CompetitiveAdvantageVerdict,
 } from "./team-types";
 
 interface TeamContextValue {
@@ -35,7 +40,16 @@ interface TeamContextValue {
   currentMemberIndex: number;
   setCurrentMemberIndex(i: number): void;
 
-  startSession(): void;
+  personaStances: PersonaStanceMap;
+  setPersonaStance(id: string, stance: PersonaStance): void;
+
+  founderResponse: PersonaResponse | null;
+  competitiveAdvantage: CompetitiveAdvantageVerdict | null;
+  sessionPhase: "founder" | "team";
+
+  startFounderSession(): void;
+  confirmCompetitiveAdvantage(verdict: CompetitiveAdvantageVerdict): void;
+  startRemainingSession(): void;
   restartSession(): void;
 }
 
@@ -45,6 +59,103 @@ export function useTeamContext(): TeamContextValue {
   const ctx = useContext(TeamContext);
   if (!ctx) throw new Error("useTeamContext must be used within TeamProvider");
   return ctx;
+}
+
+/** Consume an SSE ReadableStream, calling onEvent for each parsed event. */
+async function consumeSSEStream(
+  res: Response,
+  signal: AbortSignal,
+  onEvent: (event: TeamSessionEvent) => void
+): Promise<void> {
+  const reader = res.body?.getReader();
+  if (!reader) throw new Error("No response body");
+
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const parts = buffer.split("\n\n");
+    buffer = parts.pop() ?? "";
+
+    for (const part of parts) {
+      const match = part.match(/^data: (.+)$/m);
+      if (!match) continue;
+
+      let event: TeamSessionEvent;
+      try {
+        event = JSON.parse(match[1]) as TeamSessionEvent;
+      } catch {
+        continue;
+      }
+
+      if (signal.aborted) return;
+      onEvent(event);
+    }
+  }
+}
+
+/** Apply a standard team-phase SSE event to shared state updaters. */
+function applyTeamEvent(
+  event: TeamSessionEvent,
+  setters: {
+    setResponses: Dispatch<SetStateAction<PersonaResponse[]>>;
+    setActivePersonaId: Dispatch<SetStateAction<string | null>>;
+    setTeamBrief: Dispatch<SetStateAction<TeamBrief | null>>;
+    setSessionError: Dispatch<SetStateAction<string | null>>;
+    setSessionStatus: Dispatch<SetStateAction<SessionStatus>>;
+    onComplete(): void;
+  }
+): void {
+  const {
+    setResponses,
+    setActivePersonaId,
+    setTeamBrief,
+    setSessionError,
+    setSessionStatus,
+    onComplete,
+  } = setters;
+
+  if (event.type === "session_start") {
+    // already streaming
+  } else if (event.type === "persona_start") {
+    setActivePersonaId(event.personaId);
+    setResponses((prev) => [
+      ...prev,
+      {
+        personaId: event.personaId,
+        personaName: event.personaName,
+        content: "",
+        isComplete: false,
+      },
+    ]);
+  } else if (event.type === "persona_token") {
+    setResponses((prev) =>
+      prev.map((r) =>
+        r.personaId === event.personaId
+          ? { ...r, content: r.content + event.token }
+          : r
+      )
+    );
+  } else if (event.type === "persona_complete") {
+    setResponses((prev) =>
+      prev.map((r) =>
+        r.personaId === event.personaId ? { ...r, isComplete: true } : r
+      )
+    );
+    setActivePersonaId(null);
+  } else if (event.type === "brief_complete") {
+    setTeamBrief(event.brief);
+  } else if (event.type === "session_complete") {
+    setSessionStatus("complete");
+    onComplete();
+  } else if (event.type === "error") {
+    setSessionError(event.message);
+    setSessionStatus("error");
+  }
 }
 
 export function TeamProvider({ children }: { children: ReactNode }) {
@@ -59,6 +170,12 @@ export function TeamProvider({ children }: { children: ReactNode }) {
   const [sessionError, setSessionError] = useState<string | null>(null);
   const [currentMemberIndex, setCurrentMemberIndex] = useState(0);
 
+  const [personaStances, setPersonaStancesState] = useState<PersonaStanceMap>({});
+  const [founderResponse, setFounderResponse] = useState<PersonaResponse | null>(null);
+  const [competitiveAdvantage, setCompetitiveAdvantage] =
+    useState<CompetitiveAdvantageVerdict | null>(null);
+  const [sessionPhase, setSessionPhase] = useState<"founder" | "team">("founder");
+
   const abortRef = useRef<AbortController | null>(null);
 
   const togglePersona = useCallback((id: string) => {
@@ -67,7 +184,18 @@ export function TeamProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
-  const startSession = useCallback(() => {
+  const setPersonaStance = useCallback((id: string, stance: PersonaStance) => {
+    setPersonaStancesState((prev) => ({ ...prev, [id]: stance }));
+  }, []);
+
+  const confirmCompetitiveAdvantage = useCallback(
+    (verdict: CompetitiveAdvantageVerdict) => {
+      setCompetitiveAdvantage(verdict);
+    },
+    []
+  );
+
+  const startFounderSession = useCallback(() => {
     if (abortRef.current) abortRef.current.abort();
     const controller = new AbortController();
     abortRef.current = controller;
@@ -78,6 +206,66 @@ export function TeamProvider({ children }: { children: ReactNode }) {
     setTeamBrief(null);
     setSessionError(null);
     setCurrentMemberIndex(0);
+    setFounderResponse(null);
+    setCompetitiveAdvantage(null);
+
+    const hasFounder = selectedPersonaIds.includes("founder");
+
+    if (!hasFounder) {
+      // Single-phase fallback — no Founder in team
+      setSessionPhase("team");
+      setStep("consulting_team");
+
+      (async () => {
+        try {
+          const res = await fetch("/api/team/session", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              projectBrief,
+              selectedPersonaIds,
+              founderOnly: false,
+              personaStances,
+            }),
+            signal: controller.signal,
+          });
+
+          if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            throw new Error(
+              (data as { error?: string }).error ?? `HTTP ${res.status}`
+            );
+          }
+
+          setSessionStatus("streaming");
+
+          await consumeSSEStream(res, controller.signal, (event) => {
+            applyTeamEvent(event, {
+              setResponses,
+              setActivePersonaId,
+              setTeamBrief,
+              setSessionError,
+              setSessionStatus,
+              onComplete() {
+                setStep("team_review");
+                setCurrentMemberIndex(0);
+              },
+            });
+          });
+
+          abortRef.current = null;
+        } catch (err) {
+          if ((err as Error).name === "AbortError") return;
+          setSessionError(err instanceof Error ? err.message : String(err));
+          setSessionStatus("error");
+          abortRef.current = null;
+        }
+      })();
+      return;
+    }
+
+    // Phase 1 — Founder only
+    setSessionPhase("founder");
     setStep("consulting_team");
 
     (async () => {
@@ -87,83 +275,65 @@ export function TeamProvider({ children }: { children: ReactNode }) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             projectBrief,
-            selectedPersonaIds,
+            founderOnly: true,
+            personaStances,
           }),
           signal: controller.signal,
         });
 
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
-          throw new Error((data as { error?: string }).error ?? `HTTP ${res.status}`);
+          throw new Error(
+            (data as { error?: string }).error ?? `HTTP ${res.status}`
+          );
         }
 
         setSessionStatus("streaming");
 
-        const reader = res.body?.getReader();
-        if (!reader) throw new Error("No response body");
-
-        const decoder = new TextDecoder();
-        let buffer = "";
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
-          const parts = buffer.split("\n\n");
-          buffer = parts.pop() ?? "";
-
-          for (const part of parts) {
-            const match = part.match(/^data: (.+)$/m);
-            if (!match) continue;
-
-            let event: TeamSessionEvent;
-            try {
-              event = JSON.parse(match[1]) as TeamSessionEvent;
-            } catch {
-              continue;
-            }
-
-            if (event.type === "session_start") {
-              // Already streaming
-            } else if (event.type === "persona_start") {
-              setActivePersonaId(event.personaId);
-              setResponses((prev) => [
-                ...prev,
-                {
-                  personaId: event.personaId,
-                  personaName: event.personaName,
-                  content: "",
-                  isComplete: false,
-                },
-              ]);
-            } else if (event.type === "persona_token") {
-              setResponses((prev) =>
-                prev.map((r) =>
-                  r.personaId === event.personaId
-                    ? { ...r, content: r.content + event.token }
-                    : r
-                )
-              );
-            } else if (event.type === "persona_complete") {
-              setResponses((prev) =>
-                prev.map((r) =>
-                  r.personaId === event.personaId ? { ...r, isComplete: true } : r
-                )
-              );
-              setActivePersonaId(null);
-            } else if (event.type === "brief_complete") {
-              setTeamBrief(event.brief);
-            } else if (event.type === "session_complete") {
-              setSessionStatus("complete");
-              setStep("team_review");
-              setCurrentMemberIndex(0);
-            } else if (event.type === "error") {
-              setSessionError(event.message);
-              setSessionStatus("error");
-            }
+        await consumeSSEStream(res, controller.signal, (event) => {
+          if (event.type === "session_start") {
+            // already streaming
+          } else if (event.type === "persona_start") {
+            setActivePersonaId(event.personaId);
+            setResponses((prev) => [
+              ...prev,
+              {
+                personaId: event.personaId,
+                personaName: event.personaName,
+                content: "",
+                isComplete: false,
+              },
+            ]);
+          } else if (event.type === "persona_token") {
+            setResponses((prev) =>
+              prev.map((r) =>
+                r.personaId === event.personaId
+                  ? { ...r, content: r.content + event.token }
+                  : r
+              )
+            );
+          } else if (event.type === "persona_complete") {
+            setResponses((prev) =>
+              prev.map((r) =>
+                r.personaId === event.personaId ? { ...r, isComplete: true } : r
+              )
+            );
+            setActivePersonaId(null);
+          } else if (event.type === "competitive_advantage_verdict") {
+            setCompetitiveAdvantage(event.verdict);
+          } else if (event.type === "founder_phase_complete") {
+            setSessionStatus("complete");
+            setResponses((prev) => {
+              const fr = prev.find((r) => r.personaId === "founder") ?? null;
+              setFounderResponse(fr);
+              return prev;
+            });
+            setStep("founder_gate");
+          } else if (event.type === "error") {
+            setSessionError(event.message);
+            setSessionStatus("error");
           }
-        }
+        });
 
         abortRef.current = null;
       } catch (err) {
@@ -173,7 +343,85 @@ export function TeamProvider({ children }: { children: ReactNode }) {
         abortRef.current = null;
       }
     })();
-  }, [projectBrief, selectedPersonaIds]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectBrief, selectedPersonaIds, personaStances]);
+
+  const startRemainingSession = useCallback(() => {
+    if (abortRef.current) abortRef.current.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    const remainingSlugs = selectedPersonaIds.filter((id) => id !== "founder");
+
+    setSessionPhase("team");
+    setStep("consulting_team");
+    setSessionStatus("loading");
+    setActivePersonaId(null);
+    setTeamBrief(null);
+    setSessionError(null);
+    // Intentionally do NOT reset `responses` — founder's entry stays
+
+    (async () => {
+      try {
+        const res = await fetch("/api/team/session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            projectBrief,
+            selectedPersonaIds: remainingSlugs,
+            founderOnly: false,
+            personaStances,
+            competitiveAdvantage,
+            founderResponse: founderResponse
+              ? {
+                  personaId: founderResponse.personaId,
+                  personaName: founderResponse.personaName,
+                  content: founderResponse.content,
+                }
+              : undefined,
+          }),
+          signal: controller.signal,
+        });
+
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(
+            (data as { error?: string }).error ?? `HTTP ${res.status}`
+          );
+        }
+
+        setSessionStatus("streaming");
+
+        await consumeSSEStream(res, controller.signal, (event) => {
+          applyTeamEvent(event, {
+            setResponses,
+            setActivePersonaId,
+            setTeamBrief,
+            setSessionError,
+            setSessionStatus,
+            onComplete() {
+              setStep("team_review");
+              setCurrentMemberIndex(0);
+            },
+          });
+        });
+
+        abortRef.current = null;
+      } catch (err) {
+        if ((err as Error).name === "AbortError") return;
+        setSessionError(err instanceof Error ? err.message : String(err));
+        setSessionStatus("error");
+        abortRef.current = null;
+      }
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    projectBrief,
+    selectedPersonaIds,
+    personaStances,
+    competitiveAdvantage,
+    founderResponse,
+  ]);
 
   const restartSession = useCallback(() => {
     if (abortRef.current) {
@@ -189,6 +437,10 @@ export function TeamProvider({ children }: { children: ReactNode }) {
     setTeamBrief(null);
     setSessionError(null);
     setCurrentMemberIndex(0);
+    setPersonaStancesState({});
+    setFounderResponse(null);
+    setCompetitiveAdvantage(null);
+    setSessionPhase("founder");
   }, []);
 
   return (
@@ -207,7 +459,14 @@ export function TeamProvider({ children }: { children: ReactNode }) {
         sessionError,
         currentMemberIndex,
         setCurrentMemberIndex,
-        startSession,
+        personaStances,
+        setPersonaStance,
+        founderResponse,
+        competitiveAdvantage,
+        sessionPhase,
+        startFounderSession,
+        confirmCompetitiveAdvantage,
+        startRemainingSession,
         restartSession,
       }}
     >

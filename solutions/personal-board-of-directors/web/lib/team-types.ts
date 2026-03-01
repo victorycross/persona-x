@@ -2,10 +2,15 @@
  * Client-safe types for the Software Team Advisor feature.
  */
 
+export type PersonaStance = "constructive" | "balanced" | "critical";
+export type PersonaStanceMap = Record<string, PersonaStance>;
+export type CompetitiveAdvantageVerdict = "yes" | "no" | "unsure";
+
 export type TeamFlowStep =
   | "persona_select"
   | "project_input"
   | "consulting_team"
+  | "founder_gate"
   | "team_review"
   | "team_brief";
 
@@ -56,4 +61,6 @@ export type TeamSessionEvent =
   | { type: "brief_start" }
   | { type: "brief_complete"; brief: TeamBrief }
   | { type: "session_complete" }
+  | { type: "competitive_advantage_verdict"; verdict: CompetitiveAdvantageVerdict }
+  | { type: "founder_phase_complete" }
   | { type: "error"; message: string };

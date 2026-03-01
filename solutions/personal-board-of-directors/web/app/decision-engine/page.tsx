@@ -5,6 +5,7 @@ import { TeamStepIndicator } from "@/components/team/team-step-indicator";
 import { PersonaSelector } from "@/components/team/persona-selector";
 import { ProjectInput } from "@/components/team/project-input";
 import { TeamLoading } from "@/components/team/team-loading";
+import { FounderGate } from "@/components/team/founder-gate";
 import { TeamReview } from "@/components/team/team-review";
 import { TeamBriefDisplay } from "@/components/team/team-brief-display";
 
@@ -40,6 +41,15 @@ function TeamFlow() {
 
   if (step === "consulting_team") {
     return <TeamLoading />;
+  }
+
+  if (step === "founder_gate") {
+    return (
+      <>
+        <TeamStepIndicator />
+        <FounderGate />
+      </>
+    );
   }
 
   if (step === "team_review") {

@@ -6,9 +6,17 @@ import {
   estimateCost,
 } from "@/lib/team-personas";
 import { ROLE_BADGE_COLORS, DEFAULT_BADGE_COLOR } from "@/lib/constants";
+import type { PersonaStance } from "@/lib/team-types";
+
+const STANCE_OPTIONS: { value: PersonaStance; label: string }[] = [
+  { value: "constructive", label: "Constructive" },
+  { value: "balanced", label: "Balanced" },
+  { value: "critical", label: "Critical" },
+];
 
 export function PersonaSelector() {
-  const { selectedPersonaIds, togglePersona, setStep } = useTeamContext();
+  const { selectedPersonaIds, togglePersona, setStep, personaStances, setPersonaStance } =
+    useTeamContext();
 
   const count = selectedPersonaIds.length;
   const cost = estimateCost(count);
@@ -28,18 +36,27 @@ export function PersonaSelector() {
           const isSelected = selectedPersonaIds.includes(persona.id);
           const badgeColor =
             ROLE_BADGE_COLORS[persona.contributionType] ?? DEFAULT_BADGE_COLOR;
+          const activeStance: PersonaStance = personaStances[persona.id] ?? "balanced";
 
           return (
-            <button
+            <div
               key={persona.id}
+              role="button"
+              tabIndex={0}
               onClick={() => togglePersona(persona.id)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  togglePersona(persona.id);
+                }
+              }}
+              aria-pressed={isSelected}
               className={[
-                "text-left rounded-xl border px-4 py-4 transition-all",
+                "text-left rounded-xl border px-4 py-4 transition-all cursor-pointer",
                 isSelected
                   ? "border-board-accent bg-board-accent/5 shadow-sm"
                   : "border-board-border bg-board-surface hover:border-board-accent/40 hover:bg-board-surface",
               ].join(" ")}
-              aria-pressed={isSelected}
             >
               <div className="flex items-start gap-3">
                 <div
@@ -82,9 +99,34 @@ export function PersonaSelector() {
                   <p className="text-xs text-board-text-secondary leading-snug">
                     {persona.tagline}
                   </p>
+
+                  {isSelected && (
+                    <div
+                      className="mt-3 flex rounded-lg border border-board-border overflow-hidden"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {STANCE_OPTIONS.map((opt) => {
+                        const isActive = activeStance === opt.value;
+                        return (
+                          <button
+                            key={opt.value}
+                            onClick={() => setPersonaStance(persona.id, opt.value)}
+                            className={[
+                              "flex-1 py-1 text-[10px] font-medium transition-colors",
+                              isActive
+                                ? "bg-board-accent text-board-accent-contrast"
+                                : "bg-board-surface text-board-text-secondary hover:bg-board-border",
+                            ].join(" ")}
+                          >
+                            {opt.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
-            </button>
+            </div>
           );
         })}
       </div>
