@@ -1,5 +1,7 @@
 import path from "path";
 import { NextRequest, NextResponse } from "next/server";
+
+export const maxDuration = 60;
 import { checkApiKey } from "@/lib/api-error";
 import { createClient } from "@persona-x/llm/client.js";
 import { loadPersonasForPanel } from "@persona-x/runtime/loader.js";

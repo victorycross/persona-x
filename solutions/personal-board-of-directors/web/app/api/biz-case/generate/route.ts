@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+
+export const maxDuration = 300;
 import { checkApiKey } from "@/lib/api-error";
 import { createClient } from "@persona-x/llm/client.js";
 import { LLM_MODEL } from "@/lib/constants";
