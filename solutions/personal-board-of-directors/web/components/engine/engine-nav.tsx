@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 const TABS = [
   { label: "Board of Directors", href: "/" },
   { label: "Software Team", href: "/decision-engine" },
+  { label: "Business Case", href: "/business-case" },
 ] as const;
 
 export function EngineNav() {

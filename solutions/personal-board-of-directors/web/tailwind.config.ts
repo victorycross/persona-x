@@ -32,6 +32,7 @@ const config: Config = {
         "fade-in": "fadeIn 0.4s ease-out",
         "slide-up": "slideUp 0.4s ease-out",
         pulse: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        blink: "blink 1s steps(1) infinite",
       },
       keyframes: {
         fadeIn: {
@@ -41,6 +42,10 @@ const config: Config = {
         slideUp: {
           "0%": { opacity: "0", transform: "translateY(12px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        blink: {
+          "0%, 50%": { opacity: "1" },
+          "51%, 100%": { opacity: "0" },
         },
       },
     },
