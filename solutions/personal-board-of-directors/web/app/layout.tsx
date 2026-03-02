@@ -13,7 +13,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Persona-x",
+  title: "Persona-X by BrightPath Technologies",
   description: "AI advisory frameworks for decisions that matter",
 };
 
@@ -40,10 +40,10 @@ export default function RootLayout({
             <div className="mx-auto max-w-3xl flex items-center justify-between">
               <Link href="/" className="group">
                 <h1 className="text-xl font-bold text-board-text tracking-tight group-hover:text-board-accent transition-colors">
-                  Persona-x
+                  Persona-X
                 </h1>
                 <p className="text-xs text-board-text-secondary mt-0.5">
-                  AI advisory frameworks for decisions that matter
+                  by BrightPath Technologies
                 </p>
               </Link>
               <div className="flex items-center gap-3">

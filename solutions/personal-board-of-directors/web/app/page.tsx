@@ -60,7 +60,7 @@ export default function HomePage() {
           AI advisory tools for decisions that matter.
         </h2>
         <p className="text-base text-board-text-secondary leading-relaxed max-w-2xl">
-          Persona-x turns structured AI personas into practical advisory frameworks. Choose a tool below to get started.
+          Persona-X by BrightPath Technologies turns structured AI personas into practical advisory frameworks. Choose a tool below to get started.
         </p>
       </div>
 
