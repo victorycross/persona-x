@@ -886,6 +886,22 @@ section {
   color: var(--brand-slate);
 }
 
+.footer-nav {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  list-style: none;
+}
+
+.footer-nav a {
+  font-size: 0.8125rem;
+  color: var(--brand-light);
+  text-decoration: none;
+  transition: color var(--transition);
+}
+
+.footer-nav a:hover { color: white; }
+
 /* ── Responsive ──────────────────────────────────────────────── */
 @media (max-width: 1024px) {
   .rubric-layout { grid-template-columns: 1fr; gap: 2rem; }
