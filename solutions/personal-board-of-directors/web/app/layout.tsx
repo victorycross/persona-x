@@ -53,6 +53,18 @@ export default function RootLayout({
             </div>
           </header>
           <main id="main-content" className="mx-auto max-w-3xl px-6 py-8">{children}</main>
+          <footer className="border-t border-board-border bg-board-surface mt-12">
+            <div className="mx-auto max-w-3xl px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <p className="text-xs text-board-text-tertiary">
+                © {new Date().getFullYear()} BrightPath Technologies. Toronto, Ontario, Canada.
+              </p>
+              <nav className="flex items-center gap-5" aria-label="Legal">
+                <Link href="/contact" className="text-xs text-board-text-tertiary hover:text-board-text-secondary transition-colors">Contact</Link>
+                <Link href="/privacy" className="text-xs text-board-text-tertiary hover:text-board-text-secondary transition-colors">Privacy Policy</Link>
+                <Link href="/terms" className="text-xs text-board-text-tertiary hover:text-board-text-secondary transition-colors">Terms of Use</Link>
+              </nav>
+            </div>
+          </footer>
         </ThemeProvider>
       </body>
     </html>
