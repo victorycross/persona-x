@@ -36,13 +36,13 @@ export default function RootLayout({
           >
             Skip to main content
           </a>
-          <header className="bg-board-surface/95 backdrop-blur-md border-b border-board-border shadow-sm px-6 py-5">
+          <header className="bg-board-surface/95 backdrop-blur-md border-b border-board-border shadow-sm px-6 py-6">
             <div className="mx-auto max-w-3xl flex items-center justify-between">
               <Link href="/" className="group">
-                <h1 className="text-xl font-bold text-board-text tracking-tight group-hover:text-board-accent transition-colors">
+                <h1 className="text-4xl font-bold text-board-text tracking-tight group-hover:text-board-accent transition-colors">
                   Persona-X
                 </h1>
-                <p className="text-xs text-board-text-secondary mt-0.5">
+                <p className="text-sm text-board-text-secondary mt-1">
                   by BrightPath Technologies
                 </p>
               </Link>
