@@ -30,10 +30,22 @@ export default function ContactPage() {
     if (!form.consent) return;
     setFormState("submitting");
 
-    // TODO: POST to https://formspree.io/f/YOUR_FORM_ID to enable email delivery
-    // For now, simulate a short delay and show success
-    await new Promise((r) => setTimeout(r, 800));
-    setFormState("success");
+    try {
+      const res = await fetch("https://formspree.io/f/xbdaeegl", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          organisation: form.organisation,
+          service: form.service,
+          message: form.message,
+        }),
+      });
+      setFormState(res.ok ? "success" : "error");
+    } catch {
+      setFormState("error");
+    }
   }
 
   if (formState === "success") {
