@@ -9,8 +9,31 @@ interface Props {
   idle: string;
   busy: string;
   className?: string;
-  /** Optional formatter for the success toast from the JSON response. */
-  done?: (data: unknown) => string;
+  /**
+   * Optional success-toast template. Must be a plain string (Server Components
+   * cannot pass functions to this Client Component). Use {key} placeholders that
+   * are filled from the JSON response, e.g. "Filed {filed} of {found}.".
+   */
+  doneTemplate?: string;
+}
+
+function formatTemplate(tpl: string, data: unknown): string {
+  return tpl.replace(/\{([\w.]+)\}/g, (_, path: string) => {
+    let cur: unknown = data;
+    for (const key of path.split(".")) {
+      if (
+        cur &&
+        typeof cur === "object" &&
+        key in (cur as Record<string, unknown>)
+      ) {
+        cur = (cur as Record<string, unknown>)[key];
+      } else {
+        cur = undefined;
+        break;
+      }
+    }
+    return cur === undefined || cur === null ? "" : String(cur);
+  });
 }
 
 /**
@@ -23,7 +46,7 @@ export default function RunButton({
   idle,
   busy,
   className,
-  done,
+  doneTemplate,
 }: Props) {
   const router = useRouter();
   const [state, setState] = useState<"idle" | "busy">("idle");
@@ -41,8 +64,8 @@ export default function RunButton({
       const data = await res.json();
       if (!res.ok) {
         setMsg(data?.error ?? "Something went wrong.");
-      } else if (done) {
-        setMsg(done(data));
+      } else if (doneTemplate) {
+        setMsg(formatTemplate(doneTemplate, data));
       }
       router.refresh();
     } catch {

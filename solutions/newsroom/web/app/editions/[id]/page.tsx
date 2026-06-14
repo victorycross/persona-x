@@ -50,11 +50,7 @@ export default async function EditionPage({
                 endpoint={`/api/editions/${edition.id}/review`}
                 idle="Convene the board"
                 busy="The board is reading…"
-                done={(d) =>
-                  `Consensus: ${
-                    (d as { review: BoardReview }).review.consensus
-                  }.`
-                }
+                doneTemplate="Consensus: {review.consensus}."
                 className="w-full rounded-md border border-ink-600 px-3 py-2 text-sm text-paper-200 hover:border-brass-600 hover:text-brass-400 disabled:opacity-50"
               />
             )}
@@ -63,7 +59,7 @@ export default async function EditionPage({
                 endpoint={`/api/editions/${edition.id}/publish`}
                 idle="Sign off & publish"
                 busy="Publishing…"
-                done={() => "Published."}
+                doneTemplate="Published."
                 className="w-full rounded-md border border-brass-600 bg-brass-600/10 px-3 py-2 text-sm font-medium text-brass-400 hover:bg-brass-600/20 disabled:opacity-50"
               />
             ) : (

@@ -51,9 +51,7 @@ export default async function NewsroomPage({
                   body={{ beatId: b.id }}
                   idle="File now"
                   busy="Researching…"
-                  done={(d) =>
-                    `Filed ${(d as { filed: number }).filed}.`
-                  }
+                  doneTemplate="Filed {filed}."
                   className="rounded border border-brass-600 px-2.5 py-1 text-xs text-brass-400 hover:bg-brass-600/15 disabled:opacity-50"
                 />
                 <form action={toggleBeat}>

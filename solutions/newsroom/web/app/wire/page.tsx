@@ -34,9 +34,7 @@ export default async function WirePage({
           body={{ newsroomId: room.id }}
           idle="Assemble edition →"
           busy="Assembling…"
-          done={(d) =>
-            `Edition with ${(d as { items: number }).items} item(s).`
-          }
+          doneTemplate="Edition with {items} item(s)."
         />
       </div>
 

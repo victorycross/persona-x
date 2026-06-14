@@ -65,9 +65,7 @@ export default async function FrontPage({
           body={{ newsroomId: room.id }}
           idle="Run an edition →"
           busy="Assembling…"
-          done={(d) =>
-            `Assembled with ${(d as { items: number }).items} item(s).`
-          }
+          doneTemplate="Assembled with {items} item(s)."
         />
       </section>
 
@@ -123,11 +121,7 @@ export default async function FrontPage({
                   body={{ beatId: b.id }}
                   idle="File"
                   busy="Researching…"
-                  done={(d) =>
-                    `Filed ${(d as { filed: number }).filed} of ${
-                      (d as { found: number }).found
-                    }.`
-                  }
+                  doneTemplate="Filed {filed} of {found}."
                   className="rounded border border-ink-600 px-2.5 py-1 text-xs text-paper-200 hover:border-brass-600 hover:text-brass-400 disabled:opacity-50"
                 />
               </div>
