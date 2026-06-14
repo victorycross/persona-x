@@ -33,6 +33,7 @@ const NAV_APP = [
   { href: "/editions", label: "Editions" },
   { href: "/contributors", label: "Contributors" },
   { href: "/subscribers", label: "Subscribers" },
+  { href: "/about", label: "About" },
 ];
 
 const NAV_PUBLIC = [
