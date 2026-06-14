@@ -3,6 +3,7 @@ import { Poppins, Lato } from "next/font/google";
 import Link from "next/link";
 import BrandMark from "@/components/BrandMark";
 import { createClient } from "@/lib/supabase/server";
+import { signOut } from "@/app/actions";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -50,6 +51,18 @@ export default async function RootLayout({
   } = await supabase.auth.getUser();
   const nav = user ? NAV_APP : NAV_PUBLIC;
 
+  // "Home" for a signed-in editor jumps to their public newsroom page (slug).
+  let homeHref = "/";
+  if (user) {
+    const { data: room } = await supabase
+      .from("newsrooms")
+      .select("slug, is_public")
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    if (room?.is_public) homeHref = `/read/${room.slug}`;
+  }
+
   return (
     <html lang="en" className={`${poppins.variable} ${lato.variable}`}>
       <body className="min-h-screen font-sans">
@@ -71,7 +84,12 @@ export default async function RootLayout({
                 Drafts for human sign-off
               </span>
             </div>
-            <nav className="mt-4 flex gap-7 border-t border-line pt-3 text-sm">
+            <nav className="mt-4 flex flex-wrap items-center gap-x-7 gap-y-2 border-t border-line pt-3 text-sm">
+              {user && (
+                <Link href={homeHref} className="text-grey hover:text-navy">
+                  Home
+                </Link>
+              )}
               {nav.map((n) => (
                 <Link
                   key={n.href}
@@ -81,6 +99,11 @@ export default async function RootLayout({
                   {n.label}
                 </Link>
               ))}
+              {user && (
+                <form action={signOut} className="ml-auto">
+                  <button className="text-grey hover:text-navy">Log out</button>
+                </form>
+              )}
             </nav>
           </div>
         </header>
