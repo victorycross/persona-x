@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import Markdown from "@/components/Markdown";
 import SubscribeForm from "@/components/SubscribeForm";
+import { roleLabel } from "@/lib/roles";
 import type { Edition, Newsroom } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -127,7 +128,9 @@ export default async function ReadPage({
                     <span className="uppercase tracking-wide text-paper-500">
                       Credits:
                     </span>{" "}
-                    {credits.map((c) => `${c.description} (${c.role})`).join(" · ")}
+                    {credits
+                      .map((c) => `${c.description} (${roleLabel(c.role)})`)
+                      .join(" · ")}
                   </p>
                 )}
 

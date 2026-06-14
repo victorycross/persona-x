@@ -154,6 +154,53 @@ export async function getContributors(
   return data ?? [];
 }
 
+export interface ContributorStats extends Contributor {
+  creditCount: number;
+  /** per-currency compensation: paid vs still outstanding */
+  totals: Record<string, { paid: number; outstanding: number }>;
+}
+
+/** Contributors directory with each person's credit count + compensation totals. */
+export async function getContributorLedger(
+  newsroomId: string
+): Promise<ContributorStats[]> {
+  const supabase = await createClient();
+  const [contribRes, contributionRes] = await Promise.all([
+    supabase
+      .from("contributors")
+      .select("*")
+      .eq("newsroom_id", newsroomId)
+      .order("name", { ascending: true })
+      .returns<Contributor[]>(),
+    supabase
+      .from("contributions")
+      .select("contributor_id, amount, currency, status")
+      .eq("newsroom_id", newsroomId),
+  ]);
+
+  const contributions =
+    (contributionRes.data as
+      | {
+          contributor_id: string;
+          amount: number | null;
+          currency: string;
+          status: string;
+        }[]
+      | null) ?? [];
+
+  return (contribRes.data ?? []).map((c) => {
+    const mine = contributions.filter((x) => x.contributor_id === c.id);
+    const totals: Record<string, { paid: number; outstanding: number }> = {};
+    for (const x of mine) {
+      if (x.amount == null) continue;
+      const t = (totals[x.currency] ??= { paid: 0, outstanding: 0 });
+      if (x.status === "paid") t.paid += Number(x.amount);
+      else t.outstanding += Number(x.amount);
+    }
+    return { ...c, creditCount: mine.length, totals };
+  });
+}
+
 export interface Credit extends Contribution {
   contributor: Contributor;
 }

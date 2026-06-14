@@ -1,12 +1,18 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getEdition, getEditionCredits, type Credit } from "@/lib/data";
+import {
+  getEdition,
+  getEditionCredits,
+  getContributors,
+  type Credit,
+} from "@/lib/data";
 import { addCredit, setContributionStatus } from "@/app/actions";
+import { CONTRIBUTOR_ROLES, roleLabel } from "@/lib/roles";
 import Markdown from "@/components/Markdown";
 import RunButton from "@/components/RunButton";
 import PublishPanel from "@/components/PublishPanel";
 import CorrectionForm from "@/components/CorrectionForm";
-import type { BoardReview } from "@/lib/types";
+import type { BoardReview, Contributor } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +26,10 @@ export default async function EditionPage({
   if (!edition) notFound();
 
   const review = edition.board_review as BoardReview | null;
-  const credits = await getEditionCredits(id);
+  const [credits, roster] = await Promise.all([
+    getEditionCredits(id),
+    getContributors(edition.newsroom_id),
+  ]);
   const published = edition.status === "published";
   const archived = edition.archived_at != null;
 
@@ -159,6 +168,7 @@ export default async function EditionPage({
         <Panel title="Human contributors">
           <CreditsLedger
             credits={credits}
+            roster={roster}
             newsroomId={edition.newsroom_id}
             editionId={edition.id}
           />
@@ -196,10 +206,12 @@ function Panel({
 
 function CreditsLedger({
   credits,
+  roster,
   newsroomId,
   editionId,
 }: {
   credits: Credit[];
+  roster: Contributor[];
   newsroomId: string;
   editionId: string;
 }) {
@@ -227,7 +239,7 @@ function CreditsLedger({
                   {c.contributor.name}
                 </span>
                 <span className="text-[10px] uppercase tracking-wide text-paper-500">
-                  {c.role}
+                  {roleLabel(c.role)}
                 </span>
               </div>
               {c.description && (
@@ -271,19 +283,25 @@ function CreditsLedger({
         <input
           name="name"
           required
-          placeholder="Contributor name"
+          list="roster-names"
+          placeholder="Contributor name (pick from roster or type new)"
           className="w-full rounded border border-ink-700 bg-ink-900 px-2 py-1.5 text-xs"
         />
+        <datalist id="roster-names">
+          {roster.map((c) => (
+            <option key={c.id} value={c.name} />
+          ))}
+        </datalist>
         <div className="flex gap-2">
           <select
             name="role"
             className="rounded border border-ink-700 bg-ink-900 px-2 py-1.5 text-xs"
           >
-            <option value="writer">writer</option>
-            <option value="expert">expert</option>
-            <option value="photographer">photographer</option>
-            <option value="editor">editor</option>
-            <option value="other">other</option>
+            {CONTRIBUTOR_ROLES.map((r) => (
+              <option key={r.value} value={r.value}>
+                {r.label}
+              </option>
+            ))}
           </select>
           <input
             name="amount"

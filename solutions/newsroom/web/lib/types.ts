@@ -67,12 +67,8 @@ export interface Edition {
   last_sent_at: string | null;
 }
 
-export type ContributorRole =
-  | "writer"
-  | "expert"
-  | "photographer"
-  | "editor"
-  | "other";
+export type { ContributorRole } from "./roles";
+import type { ContributorRole } from "./roles";
 
 export interface Contributor {
   id: string;
@@ -82,6 +78,9 @@ export interface Contributor {
   contact: string | null;
   attribution: string | null;
   rate_note: string | null;
+  bio: string | null;
+  portfolio_url: string | null;
+  active: boolean;
   created_at: string;
 }
 
