@@ -1,6 +1,7 @@
 import { getNewsrooms, getContributorLedger, type ContributorStats } from "@/lib/data";
 import { upsertContributor, deleteContributor } from "@/app/actions";
 import { CONTRIBUTOR_ROLES, roleLabel } from "@/lib/roles";
+import { isHttpUrl } from "@/lib/url";
 import type { Contributor } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -69,9 +70,9 @@ export default async function ContributorsPage({
                   {p.bio && <p className="mt-1 text-sm text-grey">{p.bio}</p>}
                   <div className="mt-1 flex flex-wrap gap-3 text-[11px] text-grey">
                     {p.contact && <span>{p.contact}</span>}
-                    {p.portfolio_url && (
+                    {isHttpUrl(p.portfolio_url) && (
                       <a
-                        href={p.portfolio_url}
+                        href={p.portfolio_url!}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-navy hover:underline"
