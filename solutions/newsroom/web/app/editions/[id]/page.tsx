@@ -31,6 +31,8 @@ export default async function EditionPage({
     getContributors(edition.newsroom_id),
   ]);
   const published = edition.status === "published";
+  const deferred = edition.status === "deferred";
+  const cancelled = edition.status === "cancelled";
   const archived = edition.archived_at != null;
 
   return (
@@ -85,7 +87,35 @@ export default async function EditionPage({
 
       <aside className="space-y-5">
         <Panel title="Editorial desk">
-          {!published ? (
+          {cancelled ? (
+            <div className="space-y-3 text-sm">
+              <p className="text-paper-300">
+                Cancelled — its stories were returned to the wire.
+              </p>
+              <RunButton
+                endpoint={`/api/editions/${edition.id}/state`}
+                body={{ action: "resume" }}
+                idle="Reopen as draft"
+                busy="…"
+                doneTemplate="Reopened."
+                className="w-full rounded border border-ink-600 px-3 py-1.5 text-xs text-paper-300 hover:text-paper-50 disabled:opacity-50"
+              />
+            </div>
+          ) : deferred ? (
+            <div className="space-y-3 text-sm">
+              <p className="text-paper-300">
+                Deferred — held for a later edition.
+              </p>
+              <RunButton
+                endpoint={`/api/editions/${edition.id}/state`}
+                body={{ action: "resume" }}
+                idle="Resume editing"
+                busy="…"
+                doneTemplate="Resumed."
+                className="w-full rounded-md border border-brass-600 bg-brass-600/10 px-3 py-2 text-sm font-medium text-brass-400 hover:bg-brass-600/20 disabled:opacity-50"
+              />
+            </div>
+          ) : !published ? (
             <div className="space-y-3">
               <RunButton
                 endpoint={`/api/editions/${edition.id}/review`}
@@ -95,6 +125,28 @@ export default async function EditionPage({
                 className="w-full rounded-md border border-ink-600 px-3 py-2 text-sm text-paper-200 hover:border-brass-600 hover:text-brass-400 disabled:opacity-50"
               />
               <PublishPanel editionId={edition.id} />
+              <div className="flex gap-2 border-t border-ink-800 pt-3">
+                <RunButton
+                  endpoint={`/api/editions/${edition.id}/state`}
+                  body={{ action: "defer" }}
+                  idle="Defer"
+                  busy="…"
+                  doneTemplate="Deferred."
+                  className="flex-1 rounded border border-ink-600 px-2 py-1.5 text-xs text-paper-300 hover:text-paper-50 disabled:opacity-50"
+                />
+                <RunButton
+                  endpoint={`/api/editions/${edition.id}/state`}
+                  body={{ action: "cancel" }}
+                  idle="Cancel edition"
+                  busy="…"
+                  doneTemplate="Cancelled — {released} returned to wire."
+                  className="flex-1 rounded border border-ink-700 px-2 py-1.5 text-xs text-paper-400 hover:border-red-500/60 hover:text-red-400 disabled:opacity-50"
+                />
+              </div>
+              <p className="text-[11px] text-paper-500">
+                No relevant news? Defer to hold for later, or cancel to release
+                the stories back to the wire.
+              </p>
             </div>
           ) : (
             <div className="space-y-2 text-sm">

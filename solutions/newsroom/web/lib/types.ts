@@ -2,7 +2,12 @@
 
 export type Significance = "low" | "medium" | "high";
 export type FilingStatus = "new" | "filed" | "spiked";
-export type EditionStatus = "draft" | "in_review" | "published";
+export type EditionStatus =
+  | "draft"
+  | "in_review"
+  | "published"
+  | "deferred"
+  | "cancelled";
 
 export interface Newsroom {
   id: string;
