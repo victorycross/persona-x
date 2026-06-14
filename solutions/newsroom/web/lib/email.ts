@@ -35,6 +35,35 @@ function transport() {
 export interface SendResult {
   sent: number;
   failed: number;
+  error?: string; // first failure message, surfaced to the editor
+}
+
+/** Send a single transactional email (e.g. a confirmation). */
+export async function sendOne(
+  to: string,
+  subject: string,
+  html: string
+): Promise<{ ok: boolean; error?: string }> {
+  if (!isEmailConfigured()) {
+    return { ok: false, error: "Email is not configured." };
+  }
+  const from =
+    process.env.EMAIL_FROM || (process.env.ZOHO_SMTP_USER as string);
+  try {
+    await transport().sendMail({ from, to, subject, html });
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: smtpMessage(err) };
+  }
+}
+
+/** A short, safe description of an SMTP failure for the editor. */
+function smtpMessage(err: unknown): string {
+  const e = err as { responseCode?: number; message?: string };
+  if (e?.responseCode === 535) {
+    return "SMTP auth rejected (535) — the mail provider refused the login. Check SMTP AUTH / security-defaults policy.";
+  }
+  return e?.message?.slice(0, 200) || "SMTP send failed.";
 }
 
 export interface Recipient {
@@ -79,6 +108,7 @@ export async function sendToSubscribers(
 
   let sent = 0;
   let failed = 0;
+  let error: string | undefined;
   for (const r of recipients) {
     const body = trackLinks(htmlBody, opts.editionId, r.token, opts.siteUrl);
     const manageUrl = `${opts.siteUrl}/manage/${r.token}`;
@@ -90,7 +120,8 @@ export async function sendToSubscribers(
     } catch (err) {
       console.error(`Email to ${r.email} failed:`, err);
       failed++;
+      if (!error) error = smtpMessage(err);
     }
   }
-  return { sent, failed };
+  return { sent, failed, error };
 }

@@ -54,6 +54,7 @@ export async function POST(
       .eq("newsroom_id", edition.newsroom_id)
       .eq("status", "active")
       .eq("email_enabled", true)
+      .not("confirmed_at", "is", null) // confirmed (double opt-in) only
       .returns<Subscriber[]>();
 
     const recipients = (subs ?? []).map((s) => ({
@@ -71,6 +72,14 @@ export async function POST(
       editionId: edition.id,
       siteUrl: siteUrl(),
     });
+
+    // Surface a real delivery failure instead of a silent "0 sent".
+    if (result.sent === 0 && result.failed > 0) {
+      return NextResponse.json(
+        { error: result.error ?? "Email delivery failed." },
+        { status: 502 }
+      );
+    }
 
     await supabase
       .from("editions")

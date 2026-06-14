@@ -204,12 +204,30 @@ export async function addSubscriberManual(formData: FormData) {
     .toLowerCase();
   if (!newsroomId || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return;
   const supabase = await createClient();
+  // Owner-added subscribers are auto-confirmed (the owner vouches).
   await supabase
     .from("subscribers")
     .upsert(
-      { newsroom_id: newsroomId, email, status: "active" },
+      {
+        newsroom_id: newsroomId,
+        email,
+        status: "active",
+        confirmed_at: new Date().toISOString(),
+      },
       { onConflict: "newsroom_id,email" }
     );
+  revalidatePath("/subscribers");
+}
+
+/** Owner confirms a pending subscriber manually (vouches for them). */
+export async function confirmSubscriber(formData: FormData) {
+  const id = String(formData.get("subscriberId") ?? "");
+  if (!id) return;
+  const supabase = await createClient();
+  await supabase
+    .from("subscribers")
+    .update({ confirmed_at: new Date().toISOString(), status: "active" })
+    .eq("id", id);
   revalidatePath("/subscribers");
 }
 

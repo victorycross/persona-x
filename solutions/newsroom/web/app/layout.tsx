@@ -119,7 +119,10 @@ export default async function RootLayout({
           >
             BrightPath Technology
           </a>{" "}
-          platform.
+          platform.{" "}
+          <Link href="/privacy" className="text-grey hover:text-navy">
+            Privacy
+          </Link>
         </footer>
       </body>
     </html>
