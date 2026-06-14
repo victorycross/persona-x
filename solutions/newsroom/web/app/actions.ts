@@ -7,6 +7,26 @@ import { slugify } from "@/lib/slug";
 import { safeHttpUrl } from "@/lib/url";
 import { DEFAULT_MODEL } from "@/lib/pricing";
 
+/** Sign out and return to the public newsroom page (the slug), or the landing. */
+export async function signOut() {
+  const supabase = await createClient();
+  let dest = "/";
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user) {
+    const { data: room } = await supabase
+      .from("newsrooms")
+      .select("slug, is_public")
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    if (room?.is_public) dest = `/read/${room.slug}`;
+  }
+  await supabase.auth.signOut();
+  redirect(dest);
+}
+
 /** Found a new newsroom and seed it with two starter beats. */
 export async function createNewsroom(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
