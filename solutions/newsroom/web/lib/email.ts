@@ -37,15 +37,40 @@ export interface SendResult {
   failed: number;
 }
 
+export interface Recipient {
+  email: string;
+  token: string; // per-subscriber handle for manage + tracking
+}
+
+export interface SendOptions {
+  editionId: string;
+  siteUrl: string;
+}
+
+/** Rewrite body links through the click-tracking redirect (per recipient). */
+function trackLinks(
+  html: string,
+  editionId: string,
+  token: string,
+  siteUrl: string
+): string {
+  return html.replace(/href="(https?:\/\/[^"]+)"/g, (_m, url: string) => {
+    const tracked = `${siteUrl}/api/track/click?e=${editionId}&s=${token}&u=${encodeURIComponent(
+      url
+    )}`;
+    return `href="${tracked}"`;
+  });
+}
+
 /**
- * Send one HTML email to many recipients, each addressed individually via BCC
- * so subscribers don't see each other. The unsubscribe link is per-recipient,
- * so we send in small batches keyed by a footer template.
+ * Send one HTML email per recipient, with a per-recipient manage link, click
+ * tracking on body links, and an open-tracking pixel.
  */
 export async function sendToSubscribers(
-  recipients: { email: string; unsubscribeUrl: string }[],
+  recipients: Recipient[],
   subject: string,
-  htmlBody: string
+  htmlBody: string,
+  opts: SendOptions
 ): Promise<SendResult> {
   if (!isEmailConfigured()) return { sent: 0, failed: recipients.length };
   const from =
@@ -55,7 +80,10 @@ export async function sendToSubscribers(
   let sent = 0;
   let failed = 0;
   for (const r of recipients) {
-    const html = `${htmlBody}<hr style="margin:32px 0;border:none;border-top:1px solid #ddd"/><p style="font:12px sans-serif;color:#888">You're receiving this because you subscribed. <a href="${r.unsubscribeUrl}">Manage your subscription or unsubscribe</a>.</p>`;
+    const body = trackLinks(htmlBody, opts.editionId, r.token, opts.siteUrl);
+    const manageUrl = `${opts.siteUrl}/manage/${r.token}`;
+    const pixel = `<img src="${opts.siteUrl}/api/track/open?e=${opts.editionId}&s=${r.token}" width="1" height="1" alt="" style="display:none">`;
+    const html = `${body}<hr style="margin:32px 0;border:none;border-top:1px solid #ddd"/><p style="font:12px sans-serif;color:#888">You're receiving this because you subscribed. <a href="${manageUrl}">Manage your subscription or unsubscribe</a>.</p>${pixel}`;
     try {
       await tx.sendMail({ from, to: r.email, subject, html });
       sent++;
