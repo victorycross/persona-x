@@ -30,6 +30,7 @@ const NAV_APP = [
   { href: "/newsroom", label: "The Newsroom" },
   { href: "/wire", label: "The Wire" },
   { href: "/editions", label: "Editions" },
+  { href: "/subscribers", label: "Subscribers" },
 ];
 
 const NAV_PUBLIC = [

@@ -55,7 +55,7 @@ export async function sendToSubscribers(
   let sent = 0;
   let failed = 0;
   for (const r of recipients) {
-    const html = `${htmlBody}<hr style="margin:32px 0;border:none;border-top:1px solid #ddd"/><p style="font:12px sans-serif;color:#888">You're receiving this because you subscribed. <a href="${r.unsubscribeUrl}">Unsubscribe</a>.</p>`;
+    const html = `${htmlBody}<hr style="margin:32px 0;border:none;border-top:1px solid #ddd"/><p style="font:12px sans-serif;color:#888">You're receiving this because you subscribed. <a href="${r.unsubscribeUrl}">Manage your subscription or unsubscribe</a>.</p>`;
     try {
       await tx.sendMail({ from, to: r.email, subject, html });
       sent++;

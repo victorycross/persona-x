@@ -105,6 +105,7 @@ export interface Subscriber {
   newsroom_id: string;
   email: string;
   status: "active" | "unsubscribed";
+  email_enabled: boolean;
   token: string;
   created_at: string;
 }

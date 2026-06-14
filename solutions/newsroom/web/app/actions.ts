@@ -98,6 +98,32 @@ export async function toggleNewsroomPublic(formData: FormData) {
   revalidatePath("/editions");
 }
 
+/** Owner adds a subscriber manually (e.g. from a paper sign-up sheet). */
+export async function addSubscriberManual(formData: FormData) {
+  const newsroomId = String(formData.get("newsroomId") ?? "");
+  const email = String(formData.get("email") ?? "")
+    .trim()
+    .toLowerCase();
+  if (!newsroomId || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return;
+  const supabase = await createClient();
+  await supabase
+    .from("subscribers")
+    .upsert(
+      { newsroom_id: newsroomId, email, status: "active" },
+      { onConflict: "newsroom_id,email" }
+    );
+  revalidatePath("/subscribers");
+}
+
+/** Owner removes a subscriber. */
+export async function removeSubscriber(formData: FormData) {
+  const id = String(formData.get("subscriberId") ?? "");
+  if (!id) return;
+  const supabase = await createClient();
+  await supabase.from("subscribers").delete().eq("id", id);
+  revalidatePath("/subscribers");
+}
+
 /** Set a readable public slug (the /read/<slug> URL). Appends a suffix on clash. */
 export async function setNewsroomSlug(formData: FormData) {
   const id = String(formData.get("newsroomId") ?? "");
