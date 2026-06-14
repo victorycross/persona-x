@@ -53,11 +53,12 @@ export async function POST(
       .select("*")
       .eq("newsroom_id", edition.newsroom_id)
       .eq("status", "active")
+      .eq("email_enabled", true)
       .returns<Subscriber[]>();
 
     const recipients = (subs ?? []).map((s) => ({
       email: s.email,
-      unsubscribeUrl: `${siteUrl()}/api/unsubscribe?token=${s.token}`,
+      unsubscribeUrl: `${siteUrl()}/manage/${s.token}`,
     }));
     if (recipients.length === 0) {
       return NextResponse.json({ sent: 0, failed: 0, subscribers: 0 });

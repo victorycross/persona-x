@@ -38,6 +38,7 @@ export async function updateSession(request: NextRequest) {
   const isPublic =
     pathname === "/" || // public landing for signed-out visitors
     pathname.startsWith("/about") ||
+    pathname.startsWith("/manage") || // subscriber self-service (token-based)
     pathname.startsWith("/login") ||
     pathname.startsWith("/auth") ||
     pathname.startsWith("/read");
