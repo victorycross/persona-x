@@ -58,7 +58,7 @@ export async function POST(
 
     const recipients = (subs ?? []).map((s) => ({
       email: s.email,
-      unsubscribeUrl: `${siteUrl()}/manage/${s.token}`,
+      token: s.token,
     }));
     if (recipients.length === 0) {
       return NextResponse.json({ sent: 0, failed: 0, subscribers: 0 });
@@ -67,7 +67,10 @@ export async function POST(
     const html = `<div style="max-width:640px;margin:0 auto;font-family:Georgia,serif">${renderMarkdown(
       edition.body ?? ""
     )}</div>`;
-    const result = await sendToSubscribers(recipients, edition.title, html);
+    const result = await sendToSubscribers(recipients, edition.title, html, {
+      editionId: edition.id,
+      siteUrl: siteUrl(),
+    });
 
     await supabase
       .from("editions")

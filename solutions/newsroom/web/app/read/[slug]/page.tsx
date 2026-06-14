@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import Markdown from "@/components/Markdown";
 import SubscribeForm from "@/components/SubscribeForm";
+import ViewBeacon from "@/components/ViewBeacon";
 import { roleLabel } from "@/lib/roles";
 import type { Edition, Newsroom } from "@/lib/types";
 
@@ -92,6 +93,7 @@ export default async function ReadPage({
                 key={e.id}
                 className="border-b border-ink-800 pb-10 last:border-0"
               >
+                <ViewBeacon editionId={e.id} />
                 <p className="mb-2 text-[11px] uppercase tracking-widest text-paper-500">
                   {e.published_at
                     ? new Date(e.published_at).toLocaleDateString("en-AU", {

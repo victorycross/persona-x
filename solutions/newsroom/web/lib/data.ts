@@ -121,6 +121,97 @@ export async function getEdition(id: string): Promise<Edition | null> {
   return data ?? null;
 }
 
+export interface EditionEngagement {
+  editionId: string;
+  title: string;
+  status: string;
+  opens: number;
+  clicks: number;
+  views: number;
+}
+
+export interface Analytics {
+  subscribers: {
+    total: number;
+    active: number;
+    unsubscribed: number;
+    newThisMonth: number;
+    emailOff: number;
+  };
+  totals: { opens: number; clicks: number; views: number };
+  perEdition: EditionEngagement[];
+}
+
+/** Readership analytics: subscriber growth + per-edition engagement. */
+export async function getAnalytics(newsroomId: string): Promise<Analytics> {
+  const supabase = await createClient();
+  const monthStart = new Date();
+  monthStart.setDate(1);
+  monthStart.setHours(0, 0, 0, 0);
+
+  const [subRes, evRes, edRes] = await Promise.all([
+    supabase
+      .from("subscribers")
+      .select("status, email_enabled, created_at")
+      .eq("newsroom_id", newsroomId),
+    supabase
+      .from("events")
+      .select("edition_id, type")
+      .eq("newsroom_id", newsroomId),
+    supabase
+      .from("editions")
+      .select("id, title, status")
+      .eq("newsroom_id", newsroomId),
+  ]);
+
+  const subs =
+    (subRes.data as
+      | { status: string; email_enabled: boolean; created_at: string }[]
+      | null) ?? [];
+  const events =
+    (evRes.data as { edition_id: string | null; type: string }[] | null) ?? [];
+  const editions =
+    (edRes.data as { id: string; title: string; status: string }[] | null) ??
+    [];
+
+  const subscribers = {
+    total: subs.length,
+    active: subs.filter((s) => s.status === "active").length,
+    unsubscribed: subs.filter((s) => s.status === "unsubscribed").length,
+    newThisMonth: subs.filter(
+      (s) => new Date(s.created_at) >= monthStart
+    ).length,
+    emailOff: subs.filter((s) => s.status === "active" && !s.email_enabled)
+      .length,
+  };
+
+  const totals = { opens: 0, clicks: 0, views: 0 };
+  const byEdition = new Map<string, { opens: number; clicks: number; views: number }>();
+  for (const e of events) {
+    if (e.type === "open") totals.opens++;
+    else if (e.type === "click") totals.clicks++;
+    else if (e.type === "view") totals.views++;
+    if (!e.edition_id) continue;
+    const rec = byEdition.get(e.edition_id) ?? { opens: 0, clicks: 0, views: 0 };
+    if (e.type === "open") rec.opens++;
+    else if (e.type === "click") rec.clicks++;
+    else if (e.type === "view") rec.views++;
+    byEdition.set(e.edition_id, rec);
+  }
+
+  const titles = new Map(editions.map((e) => [e.id, e]));
+  const perEdition: EditionEngagement[] = [...byEdition.entries()]
+    .map(([editionId, rec]) => ({
+      editionId,
+      title: titles.get(editionId)?.title ?? "(removed)",
+      status: titles.get(editionId)?.status ?? "",
+      ...rec,
+    }))
+    .sort((a, b) => b.views + b.opens - (a.views + a.opens));
+
+  return { subscribers, totals, perEdition };
+}
+
 export interface MonthSpend {
   filed: number;
   inputTokens: number;
