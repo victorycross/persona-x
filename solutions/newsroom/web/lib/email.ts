@@ -16,10 +16,15 @@ export function isEmailConfigured(): boolean {
 }
 
 function transport() {
+  // Microsoft 365 SMTP client submission: smtp.office365.com on port 587 with
+  // STARTTLS. Requires "Authenticated SMTP" enabled on the sending mailbox and
+  // an app password (basic auth). The ZOHO_SMTP_* env var names are retained for
+  // compatibility, but the values now point at Microsoft 365.
   return nodemailer.createTransport({
-    host: process.env.ZOHO_SMTP_HOST || "smtp.zoho.com",
-    port: 465,
-    secure: true,
+    host: process.env.ZOHO_SMTP_HOST || "smtp.office365.com",
+    port: 587,
+    secure: false,
+    requireTLS: true,
     auth: {
       user: process.env.ZOHO_SMTP_USER,
       pass: process.env.ZOHO_SMTP_PASS,
