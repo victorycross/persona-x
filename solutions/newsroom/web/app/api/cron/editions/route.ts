@@ -54,13 +54,19 @@ export async function GET(req: Request) {
             significance: f.significance,
             published_at: f.published_at,
           }));
-          const { data: inserted } = await supabase
+          const { data: inserted, error: insertErr } = await supabase
             .from("filings")
             .upsert(rows, {
               onConflict: "newsroom_id,url",
               ignoreDuplicates: true,
             })
             .select("id");
+          if (insertErr) {
+            console.error(
+              `Filing insert failed for ${beat.name} in ${room.name}:`,
+              insertErr
+            );
+          }
           filed += inserted?.length ?? 0;
         }
         await supabase.from("desk_runs").insert({
