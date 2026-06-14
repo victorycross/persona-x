@@ -8,7 +8,15 @@ import { useRouter } from "next/navigation";
  * is fit to publish — the Vaughn Tan rule made structural. The rationale is
  * recorded and shown as provenance.
  */
-export default function PublishPanel({ editionId }: { editionId: string }) {
+export default function PublishPanel({
+  editionId,
+  unverified = 0,
+  flagged = 0,
+}: {
+  editionId: string;
+  unverified?: number;
+  flagged?: number;
+}) {
   const router = useRouter();
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
@@ -32,8 +40,19 @@ export default function PublishPanel({ editionId }: { editionId: string }) {
     else router.refresh();
   }
 
+  const needsAttention = unverified + flagged;
+
   return (
     <div className="space-y-2">
+      {needsAttention > 0 && (
+        <div className="rounded-md border border-amber-500/40 bg-amber-500/5 p-2 text-[11px] text-amber-300">
+          {unverified > 0 && `${unverified} unverified`}
+          {unverified > 0 && flagged > 0 && " · "}
+          {flagged > 0 && `${flagged} flagged`} stor
+          {needsAttention === 1 ? "y" : "ies"}. Verify them, or note in your
+          rationale why you&apos;re publishing anyway.
+        </div>
+      )}
       <label className="block text-xs text-paper-300">
         Sign-off rationale{" "}
         <span className="text-paper-500">— required before publishing</span>

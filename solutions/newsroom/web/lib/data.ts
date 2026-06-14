@@ -99,6 +99,18 @@ export async function getEditions(newsroomId: string): Promise<Edition[]> {
   return data ?? [];
 }
 
+/** The filings that make up an edition (for verification + sourcing review). */
+export async function getEditionFilings(editionId: string): Promise<Filing[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("filings")
+    .select("*")
+    .eq("edition_id", editionId)
+    .order("official", { ascending: false })
+    .returns<Filing[]>();
+  return data ?? [];
+}
+
 export async function getEdition(id: string): Promise<Edition | null> {
   const supabase = await createClient();
   const { data } = await supabase

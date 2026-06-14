@@ -3,6 +3,7 @@ import { getNewsrooms, getWire } from "@/lib/data";
 import { spikeFiling } from "@/app/actions";
 import { rankFilings } from "@/lib/wire-editor";
 import RunButton from "@/components/RunButton";
+import { VerificationBadge, VerifyControls } from "@/components/Verification";
 
 export const dynamic = "force-dynamic";
 
@@ -66,6 +67,7 @@ export default async function WirePage({
                     {!f.published_at && (
                       <span className="text-paper-500">undated</span>
                     )}
+                    <VerificationBadge state={f.verification} />
                   </div>
                   <h3 className="font-serif text-lg leading-snug text-paper-50">
                     {f.headline}
@@ -89,12 +91,15 @@ export default async function WirePage({
                     )}
                   </div>
                 </div>
-                <form action={spikeFiling}>
-                  <input type="hidden" name="filingId" value={f.id} />
-                  <button className="rounded border border-ink-600 px-2 py-1 text-xs text-paper-400 hover:border-red-500/60 hover:text-red-400">
-                    Spike
-                  </button>
-                </form>
+                <div className="flex flex-col items-end gap-2">
+                  <form action={spikeFiling}>
+                    <input type="hidden" name="filingId" value={f.id} />
+                    <button className="rounded border border-ink-600 px-2 py-1 text-xs text-paper-400 hover:border-red-500/60 hover:text-red-400">
+                      Spike
+                    </button>
+                  </form>
+                  <VerifyControls filingId={f.id} current={f.verification} />
+                </div>
               </div>
             </li>
           ))}

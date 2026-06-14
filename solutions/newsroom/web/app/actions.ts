@@ -146,6 +146,37 @@ export async function deleteBeat(formData: FormData) {
   revalidatePath("/newsroom");
 }
 
+/**
+ * Set a story's verification state (the sourcing-standards gate): verified means
+ * the editor confirmed it (ideally a second source); flagged means single-source
+ * or unconfirmed; unverified resets it. Records who/when.
+ */
+export async function verifyFiling(formData: FormData) {
+  const id = String(formData.get("filingId") ?? "");
+  const state = String(formData.get("verification") ?? "");
+  const note = String(formData.get("verification_note") ?? "").trim() || null;
+  const editionId = String(formData.get("editionId") ?? "");
+  if (!id || !["unverified", "verified", "flagged"].includes(state)) return;
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  await supabase
+    .from("filings")
+    .update({
+      verification: state,
+      verification_note: note,
+      verified_by: state === "verified" ? user?.id ?? null : null,
+      verified_at: state === "verified" ? new Date().toISOString() : null,
+    })
+    .eq("id", id);
+
+  revalidatePath("/wire");
+  if (editionId) revalidatePath(`/editions/${editionId}`);
+}
+
 /** Spike a filing — pull it from the wire so it won't reach an edition. */
 export async function spikeFiling(formData: FormData) {
   const id = String(formData.get("filingId") ?? "");
