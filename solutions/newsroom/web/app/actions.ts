@@ -59,6 +59,7 @@ export async function createBeat(formData: FormData) {
   const brief = String(formData.get("brief") ?? "").trim();
   if (!newsroomId || !name || !brief) return;
 
+  const cadence = Number(formData.get("cadence_hours") ?? 0);
   const supabase = await createClient();
   await supabase.from("beats").insert({
     newsroom_id: newsroomId,
@@ -67,6 +68,8 @@ export async function createBeat(formData: FormData) {
     recency_days: Number(formData.get("recency_days") ?? 7),
     significance_floor: String(formData.get("significance_floor") ?? "medium"),
     model: String(formData.get("model") ?? DEFAULT_MODEL),
+    category: String(formData.get("category") ?? "").trim() || null,
+    cadence_hours: cadence > 0 ? cadence : null,
   });
   revalidatePath("/newsroom");
 }
@@ -77,6 +80,49 @@ export async function toggleBeat(formData: FormData) {
   if (!id) return;
   const supabase = await createClient();
   await supabase.from("beats").update({ active: !active }).eq("id", id);
+  revalidatePath("/newsroom");
+}
+
+/** Set a beat's automatic re-check cadence (hours; 0 = manual only). */
+export async function setBeatCadence(formData: FormData) {
+  const id = String(formData.get("beatId") ?? "");
+  if (!id) return;
+  const hours = Number(formData.get("cadence_hours") ?? 0);
+  const supabase = await createClient();
+  await supabase
+    .from("beats")
+    .update({ cadence_hours: hours > 0 ? hours : null })
+    .eq("id", id);
+  revalidatePath("/newsroom");
+}
+
+/** Archive a beat — hidden + paused, but retained and restorable. */
+export async function archiveBeat(formData: FormData) {
+  const id = String(formData.get("beatId") ?? "");
+  if (!id) return;
+  const supabase = await createClient();
+  await supabase
+    .from("beats")
+    .update({ archived_at: new Date().toISOString() })
+    .eq("id", id);
+  revalidatePath("/newsroom");
+}
+
+/** Restore an archived beat back to the active roster. */
+export async function restoreBeat(formData: FormData) {
+  const id = String(formData.get("beatId") ?? "");
+  if (!id) return;
+  const supabase = await createClient();
+  await supabase.from("beats").update({ archived_at: null }).eq("id", id);
+  revalidatePath("/newsroom");
+}
+
+/** Permanently delete a beat. Past filings are kept (beat_id set null). */
+export async function deleteBeat(formData: FormData) {
+  const id = String(formData.get("beatId") ?? "");
+  if (!id) return;
+  const supabase = await createClient();
+  await supabase.from("beats").delete().eq("id", id);
   revalidatePath("/newsroom");
 }
 

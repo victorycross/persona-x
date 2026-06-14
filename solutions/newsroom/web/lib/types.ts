@@ -25,6 +25,10 @@ export interface Beat {
   model: string;
   max_items: number;
   active: boolean;
+  category: string | null;
+  cadence_hours: number | null; // auto re-check interval; null/0 = manual
+  last_run_at: string | null;
+  archived_at: string | null;
   created_at: string;
 }
 

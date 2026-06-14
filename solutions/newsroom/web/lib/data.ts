@@ -49,13 +49,28 @@ export async function getNewsroom(id: string): Promise<Newsroom | null> {
   return data ?? null;
 }
 
+/** Live beats (not archived). */
 export async function getBeats(newsroomId: string): Promise<Beat[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("beats")
     .select("*")
     .eq("newsroom_id", newsroomId)
+    .is("archived_at", null)
     .order("created_at", { ascending: true })
+    .returns<Beat[]>();
+  return data ?? [];
+}
+
+/** Archived beats, for the restore/delete section. */
+export async function getArchivedBeats(newsroomId: string): Promise<Beat[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("beats")
+    .select("*")
+    .eq("newsroom_id", newsroomId)
+    .not("archived_at", "is", null)
+    .order("archived_at", { ascending: false })
     .returns<Beat[]>();
   return data ?? [];
 }

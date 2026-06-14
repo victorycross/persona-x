@@ -29,16 +29,27 @@ export async function GET(req: Request) {
 
   const summary: { newsroom: string; filed: number; edition: string }[] = [];
 
+  const nowMs = Date.now();
+
   for (const room of newsrooms ?? []) {
-    const { data: beats } = await supabase
+    // Active, non-archived beats with a cadence set, that are DUE for a re-check.
+    const { data: allBeats } = await supabase
       .from("beats")
       .select("*")
       .eq("newsroom_id", room.id)
       .eq("active", true)
+      .is("archived_at", null)
       .returns<Beat[]>();
 
+    const dueBeats = (allBeats ?? []).filter((b) => {
+      if (!b.cadence_hours || b.cadence_hours <= 0) return false; // manual only
+      if (!b.last_run_at) return true; // never run → due now
+      const elapsedH = (nowMs - new Date(b.last_run_at).getTime()) / 3_600_000;
+      return elapsedH >= b.cadence_hours;
+    });
+
     let filed = 0;
-    for (const beat of beats ?? []) {
+    for (const beat of dueBeats) {
       try {
         const { filings, usage } = await runDesk(beat);
         if (filings.length > 0) {
@@ -77,12 +88,22 @@ export async function GET(req: Request) {
           output_tokens: usage.output_tokens,
           filed_count: filings.length,
         });
+        await supabase
+          .from("beats")
+          .update({ last_run_at: new Date(nowMs).toISOString() })
+          .eq("id", beat.id);
       } catch (err) {
         console.error(`Desk ${beat.name} failed in ${room.name}:`, err);
       }
     }
 
-    // Assemble a draft edition from the fresh wire.
+    // Only assemble a draft edition when this tick produced fresh filings —
+    // avoids creating an empty edition on every cron firing.
+    if (filed === 0) {
+      summary.push({ newsroom: room.name, filed: 0, edition: "—" });
+      continue;
+    }
+
     const { data: wire } = await supabase
       .from("filings")
       .select("*")
