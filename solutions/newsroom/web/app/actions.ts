@@ -194,6 +194,48 @@ export async function addCredit(formData: FormData) {
   revalidatePath(`/editions/${editionId}`);
 }
 
+/**
+ * Create or update a contributor profile in the directory. With contributorId
+ * it updates by id; otherwise it creates a new contributor.
+ */
+export async function upsertContributor(formData: FormData) {
+  const newsroomId = String(formData.get("newsroomId") ?? "");
+  const contributorId = String(formData.get("contributorId") ?? "");
+  const name = String(formData.get("name") ?? "").trim();
+  if (!newsroomId || !name) return;
+
+  const fields = {
+    name,
+    role: String(formData.get("role") ?? "writer"),
+    contact: String(formData.get("contact") ?? "").trim() || null,
+    attribution: String(formData.get("attribution") ?? "").trim() || null,
+    rate_note: String(formData.get("rate_note") ?? "").trim() || null,
+    bio: String(formData.get("bio") ?? "").trim() || null,
+    portfolio_url: String(formData.get("portfolio_url") ?? "").trim() || null,
+    // checkbox + hidden "false" companion: take the LAST submitted value
+    active: String(formData.getAll("active").pop() ?? "true") === "true",
+  };
+
+  const supabase = await createClient();
+  if (contributorId) {
+    await supabase.from("contributors").update(fields).eq("id", contributorId);
+  } else {
+    await supabase
+      .from("contributors")
+      .insert({ newsroom_id: newsroomId, ...fields });
+  }
+  revalidatePath("/contributors");
+}
+
+/** Remove a contributor from the directory (their past credits are kept). */
+export async function deleteContributor(formData: FormData) {
+  const id = String(formData.get("contributorId") ?? "");
+  if (!id) return;
+  const supabase = await createClient();
+  await supabase.from("contributors").delete().eq("id", id);
+  revalidatePath("/contributors");
+}
+
 /** Advance a contribution through proposed → agreed → paid. */
 export async function setContributionStatus(formData: FormData) {
   const id = String(formData.get("contributionId") ?? "");
