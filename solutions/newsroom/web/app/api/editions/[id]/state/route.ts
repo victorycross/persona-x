@@ -30,6 +30,18 @@ export async function POST(
       return NextResponse.json({ error: "Not signed in" }, { status: 401 });
     }
 
+    // Confirm the edition belongs to a newsroom the caller owns. RLS already
+    // scopes every write to the owner, so this is defence in depth — but it also
+    // means we 404 honestly instead of reporting success on a no-op write.
+    const { data: owned } = await supabase
+      .from("editions")
+      .select("id")
+      .eq("id", id)
+      .maybeSingle();
+    if (!owned) {
+      return NextResponse.json({ error: "Edition not found" }, { status: 404 });
+    }
+
     const status =
       action === "defer" ? "deferred" : action === "cancel" ? "cancelled" : "draft";
 
