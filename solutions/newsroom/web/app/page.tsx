@@ -209,7 +209,7 @@ function FoundNewsroom() {
           placeholder="Masthead / tagline (optional)"
           className="w-full rounded-md border border-ink-700 bg-ink-900 px-3 py-2 text-sm"
         />
-        <button className="w-full rounded-md border border-brass-600 bg-brass-600/10 px-3 py-2 text-sm font-medium text-brass-400 hover:bg-brass-600/20">
+        <button className="w-full rounded-sm bg-navy px-3 py-2.5 text-sm font-medium tracking-wide text-white transition-colors hover:bg-navy-soft">
           Open the newsroom
         </button>
       </form>

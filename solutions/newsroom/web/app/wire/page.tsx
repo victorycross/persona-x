@@ -108,9 +108,9 @@ export default async function WirePage({
 
 function SigTag({ sig }: { sig: "low" | "medium" | "high" }) {
   const map = {
-    high: "bg-red-500/15 text-red-300",
-    medium: "bg-amber-500/15 text-amber-300",
-    low: "bg-ink-700 text-paper-400",
+    high: "bg-red-500/10 text-red-700",
+    medium: "bg-amber-500/15 text-amber-700",
+    low: "bg-ink-800 text-paper-400",
   } as const;
   return (
     <span className={`rounded px-1.5 py-0.5 ${map[sig]}`}>{sig}</span>

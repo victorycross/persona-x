@@ -129,7 +129,7 @@ export default async function NewsroomPage({
               ))}
             </select>
           </label>
-          <button className="rounded-md border border-brass-600 bg-brass-600/10 px-3 py-2 text-sm font-medium text-brass-400 hover:bg-brass-600/20 sm:col-span-2">
+          <button className="rounded-sm bg-navy px-3 py-2.5 text-sm font-medium tracking-wide text-white transition-colors hover:bg-navy-soft sm:col-span-2">
             Hire the desk
           </button>
         </form>

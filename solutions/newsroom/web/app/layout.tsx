@@ -1,9 +1,25 @@
 import type { Metadata } from "next";
+import { Poppins, Lato } from "next/font/google";
 import Link from "next/link";
+import BrandMark from "@/components/BrandMark";
 import "./globals.css";
 
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["200", "300", "400", "500"],
+  variable: "--font-poppins",
+  display: "swap",
+});
+
+const lato = Lato({
+  subsets: ["latin"],
+  weight: ["300", "400"],
+  variable: "--font-lato",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title: "The Newsroom",
+  title: "The Newsroom · BrightPath Technology",
   description: "Run your own AI research desk.",
 };
 
@@ -20,29 +36,32 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className={`${poppins.variable} ${lato.variable}`}>
       <body className="min-h-screen font-sans">
-        <header className="border-b border-ink-700 bg-ink-900/60 backdrop-blur">
-          <div className="mx-auto max-w-5xl px-5 pt-6 pb-3">
-            <div className="flex items-baseline justify-between">
-              <Link href="/" className="group">
-                <h1 className="font-serif text-3xl tracking-tight text-paper-50">
-                  The Newsroom
-                </h1>
-                <p className="text-xs uppercase tracking-[0.3em] text-brass-600 group-hover:text-brass-400">
-                  Run your own research desk
-                </p>
+        <header className="sticky top-0 z-50 border-b border-line bg-paper-50/0 bg-white/85 backdrop-blur">
+          <div className="mx-auto max-w-5xl px-5 pt-5 pb-3">
+            <div className="flex items-center justify-between">
+              <Link href="/" className="group flex items-center gap-3.5">
+                <BrandMark className="h-10 w-10 text-navy" />
+                <span className="flex flex-col leading-none">
+                  <span className="font-display text-2xl font-light tracking-tight text-paper-50">
+                    The Newsroom
+                  </span>
+                  <span className="mt-1 text-[9.5px] uppercase tracking-[0.32em] text-grey">
+                    BrightPath Technology
+                  </span>
+                </span>
               </Link>
               <span className="hidden text-[11px] uppercase tracking-widest text-paper-500 sm:block">
                 Drafts for human sign-off
               </span>
             </div>
-            <nav className="mt-4 flex gap-6 border-t border-ink-800 pt-3 text-sm">
+            <nav className="mt-4 flex gap-7 border-t border-line pt-3 text-sm">
               {NAV.map((n) => (
                 <Link
                   key={n.href}
                   href={n.href}
-                  className="text-paper-300 hover:text-paper-50"
+                  className="text-grey hover:text-navy"
                 >
                   {n.label}
                 </Link>
@@ -52,7 +71,15 @@ export default function RootLayout({
         </header>
         <main className="mx-auto max-w-5xl px-5 py-8">{children}</main>
         <footer className="mx-auto max-w-5xl px-5 pb-10 pt-6 text-xs text-paper-500">
-          The Newsroom · editions are drafts until the Editor-in-Chief signs off.
+          The Newsroom · editions are drafts until the Editor-in-Chief signs
+          off. A{" "}
+          <a
+            href="https://brightpathtechnology.io"
+            className="text-grey hover:text-navy"
+          >
+            BrightPath Technology
+          </a>{" "}
+          platform.
         </footer>
       </body>
     </html>

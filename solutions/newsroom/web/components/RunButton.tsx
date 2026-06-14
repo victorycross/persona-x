@@ -59,12 +59,12 @@ export default function RunButton({
         disabled={state === "busy"}
         className={
           className ??
-          "rounded-md border border-brass-600 bg-brass-600/10 px-3 py-1.5 text-sm font-medium text-brass-400 hover:bg-brass-600/20 disabled:opacity-50"
+          "rounded-sm bg-navy px-3.5 py-1.5 text-sm font-medium tracking-wide text-white transition-colors hover:bg-navy-soft disabled:opacity-50"
         }
       >
         {state === "busy" ? (
           <span className="inline-flex items-center gap-2">
-            <span className="h-1.5 w-1.5 animate-pulseDot rounded-full bg-brass-400" />
+            <span className="h-1.5 w-1.5 animate-pulseDot rounded-full bg-current" />
             {busy}
           </span>
         ) : (

@@ -83,8 +83,8 @@ export default async function EditionsPage({
 function StatusTag({ status }: { status: string }) {
   const map: Record<string, string> = {
     draft: "border-ink-600 text-paper-300",
-    in_review: "border-amber-500/50 text-amber-300",
-    published: "border-brass-600 text-brass-400",
+    in_review: "border-amber-500/60 text-amber-700",
+    published: "border-navy text-navy",
   };
   return (
     <span
