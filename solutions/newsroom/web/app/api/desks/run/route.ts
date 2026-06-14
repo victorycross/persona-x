@@ -75,6 +75,10 @@ export async function POST(req: Request) {
       output_tokens: usage.output_tokens,
       filed_count: filed,
     });
+    await supabase
+      .from("beats")
+      .update({ last_run_at: new Date().toISOString() })
+      .eq("id", beat.id);
 
     return NextResponse.json({
       filed,
