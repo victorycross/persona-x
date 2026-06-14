@@ -98,6 +98,24 @@ export async function toggleNewsroomPublic(formData: FormData) {
   revalidatePath("/editions");
 }
 
+/** Set a readable public slug (the /read/<slug> URL). Appends a suffix on clash. */
+export async function setNewsroomSlug(formData: FormData) {
+  const id = String(formData.get("newsroomId") ?? "");
+  let slug = slugify(String(formData.get("slug") ?? ""));
+  if (!id || !slug) return;
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("newsrooms")
+    .update({ slug })
+    .eq("id", id);
+  if (error) {
+    // slug already taken — append a short suffix to guarantee uniqueness
+    slug = `${slug}-${Math.random().toString(36).slice(2, 6)}`;
+    await supabase.from("newsrooms").update({ slug }).eq("id", id);
+  }
+  revalidatePath("/editions");
+}
+
 /**
  * Credit a human contributor on an edition with what they did and what they are
  * owed — recognising, attributing, and compensating real human work alongside

@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { getNewsrooms, getEditions } from "@/lib/data";
-import { toggleNewsroomPublic } from "@/app/actions";
+import { getNewsrooms, getEditions, getSubscribers } from "@/lib/data";
+import { toggleNewsroomPublic, setNewsroomSlug } from "@/app/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +15,11 @@ export default async function EditionsPage({
     return <p className="text-sm text-paper-300">Found a newsroom first.</p>;
   }
   const room = rooms.find((r) => r.id === n) ?? rooms[0];
-  const editions = await getEditions(room.id);
+  const [editions, subscribers] = await Promise.all([
+    getEditions(room.id),
+    getSubscribers(room.id),
+  ]);
+  const activeSubs = subscribers.filter((s) => s.status === "active").length;
 
   return (
     <div className="space-y-6">
@@ -26,29 +30,45 @@ export default async function EditionsPage({
             Drafts become published articles once you sign off.
           </p>
         </div>
-        <form action={toggleNewsroomPublic} className="text-right">
-          <input type="hidden" name="newsroomId" value={room.id} />
-          <input
-            type="hidden"
-            name="isPublic"
-            value={String(room.is_public)}
-          />
-          <button className="rounded border border-ink-600 px-3 py-1.5 text-xs text-paper-300 hover:text-paper-50">
-            {room.is_public
-              ? "Public front page: on"
-              : "Public front page: off"}
-          </button>
+        <div className="w-full max-w-xs space-y-2 rounded-lg border border-ink-700 bg-ink-900/40 p-3 text-right">
+          <form action={toggleNewsroomPublic}>
+            <input type="hidden" name="newsroomId" value={room.id} />
+            <input type="hidden" name="isPublic" value={String(room.is_public)} />
+            <button className="rounded border border-ink-600 px-3 py-1.5 text-xs text-paper-300 hover:text-paper-50">
+              {room.is_public ? "Public front page: on" : "Public front page: off"}
+            </button>
+          </form>
+
           {room.is_public && (
-            <div className="mt-1 text-[11px] text-paper-500">
-              <Link
-                href={`/read/${room.slug}`}
-                className="text-brass-400 hover:text-brass"
+            <>
+              <form
+                action={setNewsroomSlug}
+                className="flex items-center justify-end gap-1"
               >
-                /read/{room.slug}
-              </Link>
-            </div>
+                <input type="hidden" name="newsroomId" value={room.id} />
+                <span className="text-[11px] text-paper-500">/read/</span>
+                <input
+                  name="slug"
+                  defaultValue={room.slug}
+                  className="w-36 rounded border border-ink-700 bg-ink-900 px-2 py-1 text-[11px]"
+                />
+                <button className="rounded border border-ink-600 px-2 py-1 text-[11px] text-paper-300 hover:text-paper-50">
+                  save
+                </button>
+              </form>
+              <div className="text-[11px] text-paper-500">
+                <Link
+                  href={`/read/${room.slug}`}
+                  className="text-brass-400 hover:text-brass"
+                >
+                  open public page →
+                </Link>
+                {" · "}
+                {activeSubs} subscriber{activeSubs === 1 ? "" : "s"}
+              </div>
+            </>
           )}
-        </form>
+        </div>
       </div>
 
       {editions.length === 0 ? (
