@@ -8,7 +8,7 @@ import {
 } from "@/lib/data";
 import { addCredit, setContributionStatus } from "@/app/actions";
 import { CONTRIBUTOR_ROLES, roleLabel } from "@/lib/roles";
-import Markdown from "@/components/Markdown";
+import EditionEditor from "@/components/EditionEditor";
 import RunButton from "@/components/RunButton";
 import PublishPanel from "@/components/PublishPanel";
 import CorrectionForm from "@/components/CorrectionForm";
@@ -78,11 +78,12 @@ export default async function EditionPage({
           </div>
         )}
 
-        {edition.body ? (
-          <Markdown source={edition.body} />
-        ) : (
-          <p className="text-sm text-paper-300">This edition is empty.</p>
-        )}
+        <EditionEditor
+          editionId={edition.id}
+          title={edition.title}
+          body={edition.body ?? ""}
+          canEdit={!published && !cancelled}
+        />
       </article>
 
       <aside className="space-y-5">
