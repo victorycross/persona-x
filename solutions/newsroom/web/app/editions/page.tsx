@@ -105,6 +105,8 @@ function StatusTag({ status }: { status: string }) {
     draft: "border-ink-600 text-paper-300",
     in_review: "border-amber-500/60 text-amber-700",
     published: "border-navy text-navy",
+    deferred: "border-amber-500/60 text-amber-700",
+    cancelled: "border-ink-600 text-paper-500 line-through",
   };
   return (
     <span
