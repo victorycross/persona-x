@@ -23,6 +23,22 @@ export async function getNewsrooms(): Promise<Newsroom[]> {
   return data ?? [];
 }
 
+/**
+ * The most recent PUBLIC newsroom — visible to signed-out visitors via the
+ * newsrooms_public_read policy. Used by the landing page's "read / subscribe".
+ */
+export async function getFeaturedPublicNewsroom(): Promise<Newsroom | null> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("newsrooms")
+    .select("*")
+    .eq("is_public", true)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle<Newsroom>();
+  return data ?? null;
+}
+
 export async function getNewsroom(id: string): Promise<Newsroom | null> {
   const supabase = await createClient();
   const { data } = await supabase

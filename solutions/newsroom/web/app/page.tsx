@@ -8,10 +8,26 @@ import {
 } from "@/lib/data";
 import { createNewsroom } from "@/app/actions";
 import RunButton from "@/components/RunButton";
+import { createClient } from "@/lib/supabase/server";
+import Landing from "@/components/Landing";
 
 export const dynamic = "force-dynamic";
 
-export default async function FrontPage({
+/** Dual-mode root: signed-out visitors see the public landing; the Editor sees the dashboard. */
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ n?: string }>;
+}) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return <Landing />;
+  return <Dashboard searchParams={searchParams} />;
+}
+
+async function Dashboard({
   searchParams,
 }: {
   searchParams: Promise<{ n?: string }>;

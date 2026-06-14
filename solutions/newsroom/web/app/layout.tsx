@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Poppins, Lato } from "next/font/google";
 import Link from "next/link";
 import BrandMark from "@/components/BrandMark";
+import { createClient } from "@/lib/supabase/server";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -24,18 +25,29 @@ export const metadata: Metadata = {
   description: "Run your own AI research desk.",
 };
 
-const NAV = [
+const NAV_APP = [
   { href: "/", label: "Front Page" },
   { href: "/newsroom", label: "The Newsroom" },
   { href: "/wire", label: "The Wire" },
   { href: "/editions", label: "Editions" },
 ];
 
-export default function RootLayout({
+const NAV_PUBLIC = [
+  { href: "/about", label: "About" },
+  { href: "/login", label: "Editor sign in" },
+];
+
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const nav = user ? NAV_APP : NAV_PUBLIC;
+
   return (
     <html lang="en" className={`${poppins.variable} ${lato.variable}`}>
       <body className="min-h-screen font-sans">
@@ -58,7 +70,7 @@ export default function RootLayout({
               </span>
             </div>
             <nav className="mt-4 flex gap-7 border-t border-line pt-3 text-sm">
-              {NAV.map((n) => (
+              {nav.map((n) => (
                 <Link
                   key={n.href}
                   href={n.href}
