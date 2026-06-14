@@ -51,6 +51,8 @@ export async function POST(req: Request) {
         official: f.official,
         significance: f.significance,
         published_at: f.published_at,
+        // can't source-check a story with no URL — flag it for the editor
+        verification: f.url ? "unverified" : "flagged",
       }));
       const { data: inserted, error: insertErr } = await supabase
         .from("filings")

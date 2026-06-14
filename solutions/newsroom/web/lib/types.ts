@@ -2,6 +2,7 @@
 
 export type Significance = "low" | "medium" | "high";
 export type FilingStatus = "new" | "filed" | "spiked";
+export type Verification = "unverified" | "verified" | "flagged";
 export type EditionStatus =
   | "draft"
   | "in_review"
@@ -52,6 +53,9 @@ export interface Filing {
   status: FilingStatus;
   edition_id: string | null;
   filed_at: string;
+  verification: Verification;
+  verification_note: string | null;
+  verified_at: string | null;
 }
 
 export interface Correction {

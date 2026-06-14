@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import {
   getEdition,
   getEditionCredits,
+  getEditionFilings,
   getContributors,
   type Credit,
 } from "@/lib/data";
@@ -12,7 +13,8 @@ import EditionEditor from "@/components/EditionEditor";
 import RunButton from "@/components/RunButton";
 import PublishPanel from "@/components/PublishPanel";
 import CorrectionForm from "@/components/CorrectionForm";
-import type { BoardReview, Contributor } from "@/lib/types";
+import { VerificationBadge, VerifyControls } from "@/components/Verification";
+import type { BoardReview, Contributor, Filing } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -26,14 +28,21 @@ export default async function EditionPage({
   if (!edition) notFound();
 
   const review = edition.board_review as BoardReview | null;
-  const [credits, roster] = await Promise.all([
+  const [credits, roster, storyFilings] = await Promise.all([
     getEditionCredits(id),
     getContributors(edition.newsroom_id),
+    getEditionFilings(id),
   ]);
   const published = edition.status === "published";
   const deferred = edition.status === "deferred";
   const cancelled = edition.status === "cancelled";
   const archived = edition.archived_at != null;
+
+  const stories = storyFilings.filter((f) => f.status !== "spiked");
+  const unverified = stories.filter(
+    (f) => f.verification === "unverified"
+  ).length;
+  const flagged = stories.filter((f) => f.verification === "flagged").length;
 
   return (
     <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
@@ -125,7 +134,11 @@ export default async function EditionPage({
                 doneTemplate="Consensus: {review.consensus}."
                 className="w-full rounded-md border border-ink-600 px-3 py-2 text-sm text-paper-200 hover:border-brass-600 hover:text-brass-400 disabled:opacity-50"
               />
-              <PublishPanel editionId={edition.id} />
+              <PublishPanel
+                editionId={edition.id}
+                unverified={unverified}
+                flagged={flagged}
+              />
               <div className="flex gap-2 border-t border-ink-800 pt-3">
                 <RunButton
                   endpoint={`/api/editions/${edition.id}/state`}
@@ -195,6 +208,42 @@ export default async function EditionPage({
             </div>
           )}
         </Panel>
+
+        {stories.length > 0 && (
+          <Panel
+            title="Verification"
+            right={`${stories.length - unverified - flagged}/${stories.length} verified`}
+          >
+            <p className="mb-2 text-[11px] text-paper-500">
+              Confirm each story before publishing — ideally a second source.
+              {unverified > 0 && ` ${unverified} unverified.`}
+              {flagged > 0 && ` ${flagged} flagged.`}
+            </p>
+            <ul className="space-y-2">
+              {stories.map((f: Filing) => (
+                <li key={f.id} className="text-sm">
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="min-w-0 text-paper-200">{f.headline}</span>
+                    <VerificationBadge state={f.verification} />
+                  </div>
+                  <div className="mt-1 flex items-center justify-between">
+                    <span className="truncate text-[11px] text-paper-500">
+                      {f.source ?? "no source"}
+                      {!f.url && " · no URL"}
+                    </span>
+                    {!published && !cancelled && (
+                      <VerifyControls
+                        filingId={f.id}
+                        current={f.verification}
+                        editionId={edition.id}
+                      />
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </Panel>
+        )}
 
         {published && (
           <Panel title="Issue a correction">

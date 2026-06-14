@@ -64,6 +64,7 @@ export async function GET(req: Request) {
             official: f.official,
             significance: f.significance,
             published_at: f.published_at,
+            verification: f.url ? "unverified" : "flagged",
           }));
           const { data: inserted, error: insertErr } = await supabase
             .from("filings")
