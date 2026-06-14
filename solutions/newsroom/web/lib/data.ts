@@ -1,5 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
-import type { Beat, Edition, Filing, Newsroom } from "@/lib/types";
+import type {
+  Beat,
+  Contribution,
+  Contributor,
+  Edition,
+  Filing,
+  Newsroom,
+  Subscriber,
+} from "@/lib/types";
 
 /**
  * The current user's newsrooms (multi-newsroom workspaces). The first is the
@@ -100,4 +108,48 @@ export async function getMonthSpend(newsroomId: string): Promise<MonthSpend> {
     }),
     { filed: 0, inputTokens: 0, outputTokens: 0 }
   );
+}
+
+// --- distribution + human contributors --------------------------------------
+
+export async function getSubscribers(
+  newsroomId: string
+): Promise<Subscriber[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("subscribers")
+    .select("*")
+    .eq("newsroom_id", newsroomId)
+    .order("created_at", { ascending: false })
+    .returns<Subscriber[]>();
+  return data ?? [];
+}
+
+export async function getContributors(
+  newsroomId: string
+): Promise<Contributor[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("contributors")
+    .select("*")
+    .eq("newsroom_id", newsroomId)
+    .order("name", { ascending: true })
+    .returns<Contributor[]>();
+  return data ?? [];
+}
+
+export interface Credit extends Contribution {
+  contributor: Contributor;
+}
+
+/** Credits (attribution + compensation) attached to one edition. */
+export async function getEditionCredits(editionId: string): Promise<Credit[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("contributions")
+    .select("*, contributor:contributors(*)")
+    .eq("edition_id", editionId)
+    .order("created_at", { ascending: true })
+    .returns<Credit[]>();
+  return data ?? [];
 }

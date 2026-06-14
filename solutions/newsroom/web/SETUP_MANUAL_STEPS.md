@@ -21,7 +21,21 @@ CRON_SECRET=<long-random-string>
 
 # Public site
 NEXT_PUBLIC_SITE_URL=https://newsroom.brightpathtechnology.io
+
+# Email distribution to subscribers (Zoho SMTP) — optional; the app runs
+# without it (Send button reports "email not configured"). To enable:
+ZOHO_SMTP_USER=newsroom@brightpathtechnology.io   # the sending mailbox
+ZOHO_SMTP_PASS=<app-specific-password>            # Zoho → Settings → Security → App Passwords
+EMAIL_FROM=The Newsroom <newsroom@brightpathtechnology.io>  # optional; defaults to ZOHO_SMTP_USER
+ZOHO_SMTP_HOST=smtp.zoho.com                      # optional (use smtp.zoho.com.au / .eu / .in for that DC)
 ```
+
+> **Zoho note:** generate an **app-specific password** (not your login password)
+> under Zoho Mail → Settings → Security → App Passwords, and make sure the
+> sending address is a verified Zoho mailbox/domain. Sending is always
+> human-triggered per edition (the "Send to subscribers" button) — never an
+> auto-blast. For larger lists, Zoho ZeptoMail (transactional API) is an
+> alternative; swap the transport in `lib/email.ts`.
 
 Set the same variables in the Vercel project (Settings → Environment Variables).
 Vercel automatically sends `Authorization: Bearer $CRON_SECRET` to cron routes,
