@@ -19,6 +19,7 @@ const lato = Lato({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://newsroom.brightpathtechnology.io"),
   title: "The Newsroom · BrightPath Technology",
   description: "Run your own AI research desk.",
 };
