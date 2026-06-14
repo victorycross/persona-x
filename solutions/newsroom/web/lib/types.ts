@@ -1,0 +1,98 @@
+// Domain types for The Newsroom. Mirror the Supabase schema (0001_init.sql).
+
+export type Significance = "low" | "medium" | "high";
+export type FilingStatus = "new" | "filed" | "spiked";
+export type EditionStatus = "draft" | "in_review" | "published";
+
+export interface Newsroom {
+  id: string;
+  owner_id: string;
+  name: string;
+  masthead: string | null;
+  slug: string;
+  is_public: boolean;
+  token_budget: number;
+  created_at: string;
+}
+
+export interface Beat {
+  id: string;
+  newsroom_id: string;
+  name: string;
+  brief: string;
+  recency_days: number;
+  significance_floor: Significance;
+  model: string;
+  max_items: number;
+  active: boolean;
+  created_at: string;
+}
+
+export interface Filing {
+  id: string;
+  newsroom_id: string;
+  beat_id: string | null;
+  beat_name: string;
+  headline: string;
+  summary: string;
+  source: string | null;
+  url: string | null;
+  official: boolean;
+  significance: Significance;
+  published_at: string | null;
+  status: FilingStatus;
+  edition_id: string | null;
+  filed_at: string;
+}
+
+export interface Edition {
+  id: string;
+  newsroom_id: string;
+  title: string;
+  slug: string;
+  status: EditionStatus;
+  body: string | null;
+  board_review: BoardReview | null;
+  signed_off_by: string | null;
+  published_at: string | null;
+  created_at: string;
+}
+
+export interface DeskRun {
+  id: string;
+  newsroom_id: string;
+  beat_id: string | null;
+  model: string;
+  input_tokens: number;
+  output_tokens: number;
+  filed_count: number;
+  ran_at: string;
+}
+
+// --- Engine value objects (not persisted as-is) -----------------------------
+
+/** A single story a desk files. Matches the JSON contract desks must return. */
+export interface DraftFiling {
+  headline: string;
+  summary: string;
+  source: string | null;
+  url: string | null;
+  official: boolean;
+  significance: Significance;
+  published_at: string | null; // ISO date or null when undated
+}
+
+/** One editorial-board member's verdict on a draft edition. */
+export interface BoardVerdict {
+  persona: string;
+  contribution: string; // e.g. "challenger"
+  verdict: "publish" | "hold" | "revise";
+  rationale: string;
+  flags: string[];
+}
+
+export interface BoardReview {
+  reviewed_at: string;
+  verdicts: BoardVerdict[];
+  consensus: "publish" | "hold" | "revise";
+}
