@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { slugify } from "@/lib/slug";
+import { safeHttpUrl } from "@/lib/url";
 import { DEFAULT_MODEL } from "@/lib/pricing";
 
 /** Found a new newsroom and seed it with two starter beats. */
@@ -211,7 +212,8 @@ export async function upsertContributor(formData: FormData) {
     attribution: String(formData.get("attribution") ?? "").trim() || null,
     rate_note: String(formData.get("rate_note") ?? "").trim() || null,
     bio: String(formData.get("bio") ?? "").trim() || null,
-    portfolio_url: String(formData.get("portfolio_url") ?? "").trim() || null,
+    // only store http(s) URLs — reject javascript:/data: etc. (href XSS)
+    portfolio_url: safeHttpUrl(String(formData.get("portfolio_url") ?? "")),
     // checkbox + hidden "false" companion: take the LAST submitted value
     active: String(formData.getAll("active").pop() ?? "true") === "true",
   };
