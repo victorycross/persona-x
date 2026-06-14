@@ -20,7 +20,14 @@ export default function SubscribeForm({ slug }: { slug: string }) {
     const data = await res.json();
     if (res.ok) {
       setState("done");
-      setMsg("You're subscribed. New editions will arrive in your inbox.");
+      setMsg(
+        data?.alreadyConfirmed
+          ? "You're already subscribed."
+          : data?.confirmationSent === false
+            ? (data?.note ??
+              "You're on the list — we'll confirm shortly.")
+            : "Almost there — check your inbox and click the link to confirm."
+      );
     } else {
       setState("error");
       setMsg(data?.error ?? "Could not subscribe.");
@@ -50,6 +57,14 @@ export default function SubscribeForm({ slug }: { slug: string }) {
       {msg && state === "error" && (
         <span className="w-full text-xs text-red-400">{msg}</span>
       )}
+      <p className="w-full text-[11px] text-grey">
+        Double opt-in — we email a confirmation link first. We only use your
+        address to send editions; unsubscribe anytime. See our{" "}
+        <a href="/privacy" className="text-navy hover:underline">
+          privacy notice
+        </a>
+        .
+      </p>
     </form>
   );
 }

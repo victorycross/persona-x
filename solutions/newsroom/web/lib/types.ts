@@ -118,6 +118,7 @@ export interface Subscriber {
   email: string;
   status: "active" | "unsubscribed";
   email_enabled: boolean;
+  confirmed_at: string | null; // double opt-in; null = pending
   token: string;
   created_at: string;
 }

@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { getNewsrooms, getSubscribers } from "@/lib/data";
-import { addSubscriberManual, removeSubscriber } from "@/app/actions";
+import {
+  addSubscriberManual,
+  removeSubscriber,
+  confirmSubscriber,
+} from "@/app/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +21,9 @@ export default async function SubscribersPage({
   const room = rooms.find((r) => r.id === n) ?? rooms[0];
   const subs = await getSubscribers(room.id);
   const active = subs.filter((s) => s.status === "active");
-  const emailable = active.filter((s) => s.email_enabled);
+  const confirmed = active.filter((s) => s.confirmed_at);
+  const pending = active.filter((s) => !s.confirmed_at);
+  const emailable = confirmed.filter((s) => s.email_enabled);
 
   return (
     <div className="space-y-6">
@@ -27,8 +33,9 @@ export default async function SubscribersPage({
             Subscribers
           </h2>
           <p className="text-sm text-grey">
-            {active.length} active · {emailable.length} receiving email ·{" "}
-            {subs.length - active.length} unsubscribed
+            {confirmed.length} confirmed · {pending.length} pending ·{" "}
+            {emailable.length} receiving email · {subs.length - active.length}{" "}
+            unsubscribed
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -84,17 +91,27 @@ export default async function SubscribersPage({
               <div className="min-w-0">
                 <span className="text-paper-50">{s.email}</span>
                 <span className="ml-2 text-[11px] uppercase tracking-wide text-grey">
-                  {s.status === "active"
-                    ? s.email_enabled
-                      ? "active"
-                      : "active · email off"
-                    : "unsubscribed"}
+                  {s.status !== "active"
+                    ? "unsubscribed"
+                    : !s.confirmed_at
+                      ? "pending"
+                      : s.email_enabled
+                        ? "confirmed"
+                        : "confirmed · email off"}
                 </span>
               </div>
               <div className="flex items-center gap-3">
                 <span className="hidden text-[11px] text-grey sm:block">
                   {new Date(s.created_at).toLocaleDateString("en-AU")}
                 </span>
+                {s.status === "active" && !s.confirmed_at && (
+                  <form action={confirmSubscriber}>
+                    <input type="hidden" name="subscriberId" value={s.id} />
+                    <button className="rounded border border-line px-2 py-1 text-[11px] text-navy hover:bg-paper-100">
+                      Confirm
+                    </button>
+                  </form>
+                )}
                 <form action={removeSubscriber}>
                   <input type="hidden" name="subscriberId" value={s.id} />
                   <button className="rounded border border-line px-2 py-1 text-[11px] text-grey hover:border-red-400 hover:text-red-500">
