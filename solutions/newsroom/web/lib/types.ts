@@ -45,6 +45,11 @@ export interface Filing {
   filed_at: string;
 }
 
+export interface Correction {
+  at: string; // ISO timestamp
+  text: string;
+}
+
 export interface Edition {
   id: string;
   newsroom_id: string;
@@ -55,6 +60,52 @@ export interface Edition {
   board_review: BoardReview | null;
   signed_off_by: string | null;
   published_at: string | null;
+  created_at: string;
+  editor_note: string | null; // human sign-off rationale (Vaughn Tan rule)
+  archived_at: string | null;
+  corrections: Correction[];
+  last_sent_at: string | null;
+}
+
+export type ContributorRole =
+  | "writer"
+  | "expert"
+  | "photographer"
+  | "editor"
+  | "other";
+
+export interface Contributor {
+  id: string;
+  newsroom_id: string;
+  name: string;
+  role: ContributorRole;
+  contact: string | null;
+  attribution: string | null;
+  rate_note: string | null;
+  created_at: string;
+}
+
+export type ContributionStatus = "proposed" | "agreed" | "paid";
+
+export interface Contribution {
+  id: string;
+  newsroom_id: string;
+  edition_id: string | null;
+  contributor_id: string;
+  role: ContributorRole;
+  description: string | null;
+  amount: number | null;
+  currency: string;
+  status: ContributionStatus;
+  created_at: string;
+}
+
+export interface Subscriber {
+  id: string;
+  newsroom_id: string;
+  email: string;
+  status: "active" | "unsubscribed";
+  token: string;
   created_at: string;
 }
 

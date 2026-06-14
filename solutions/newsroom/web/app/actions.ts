@@ -97,3 +97,66 @@ export async function toggleNewsroomPublic(formData: FormData) {
   await supabase.from("newsrooms").update({ is_public: !isPublic }).eq("id", id);
   revalidatePath("/editions");
 }
+
+/**
+ * Credit a human contributor on an edition with what they did and what they are
+ * owed — recognising, attributing, and compensating real human work alongside
+ * the AI desks. Creates the contributor record on first use.
+ */
+export async function addCredit(formData: FormData) {
+  const newsroomId = String(formData.get("newsroomId") ?? "");
+  const editionId = String(formData.get("editionId") ?? "");
+  const name = String(formData.get("name") ?? "").trim();
+  const role = String(formData.get("role") ?? "writer");
+  const description = String(formData.get("description") ?? "").trim() || null;
+  const attribution = String(formData.get("attribution") ?? "").trim() || null;
+  const amountRaw = String(formData.get("amount") ?? "").trim();
+  const amount = amountRaw ? Number(amountRaw) : null;
+  const currency = String(formData.get("currency") ?? "CAD");
+  if (!newsroomId || !editionId || !name) return;
+
+  const supabase = await createClient();
+
+  // find-or-create the contributor (by name within the newsroom)
+  const { data: existing } = await supabase
+    .from("contributors")
+    .select("id")
+    .eq("newsroom_id", newsroomId)
+    .ilike("name", name)
+    .maybeSingle();
+
+  let contributorId = existing?.id as string | undefined;
+  if (!contributorId) {
+    const { data: created } = await supabase
+      .from("contributors")
+      .insert({ newsroom_id: newsroomId, name, role, attribution })
+      .select("id")
+      .single();
+    contributorId = created?.id;
+  }
+  if (!contributorId) return;
+
+  await supabase.from("contributions").insert({
+    newsroom_id: newsroomId,
+    edition_id: editionId,
+    contributor_id: contributorId,
+    role,
+    description,
+    amount,
+    currency,
+    status: "proposed",
+  });
+
+  revalidatePath(`/editions/${editionId}`);
+}
+
+/** Advance a contribution through proposed → agreed → paid. */
+export async function setContributionStatus(formData: FormData) {
+  const id = String(formData.get("contributionId") ?? "");
+  const editionId = String(formData.get("editionId") ?? "");
+  const status = String(formData.get("status") ?? "");
+  if (!id || !["proposed", "agreed", "paid"].includes(status)) return;
+  const supabase = await createClient();
+  await supabase.from("contributions").update({ status }).eq("id", id);
+  if (editionId) revalidatePath(`/editions/${editionId}`);
+}

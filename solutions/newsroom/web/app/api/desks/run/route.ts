@@ -52,10 +52,18 @@ export async function POST(req: Request) {
         significance: f.significance,
         published_at: f.published_at,
       }));
-      const { data: inserted } = await supabase
+      const { data: inserted, error: insertErr } = await supabase
         .from("filings")
         .upsert(rows, { onConflict: "newsroom_id,url", ignoreDuplicates: true })
         .select("id");
+      if (insertErr) {
+        // Surface insert failures instead of silently filing nothing.
+        console.error("Filing insert failed:", insertErr);
+        return NextResponse.json(
+          { error: `Could not file stories: ${insertErr.message}` },
+          { status: 500 }
+        );
+      }
       filed = inserted?.length ?? 0;
     }
 

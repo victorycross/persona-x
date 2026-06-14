@@ -69,9 +69,13 @@ create table if not exists filings (
   filed_at      timestamptz not null default now()
 );
 
--- de-dupe guard: one filing per url per newsroom
-create unique index if not exists filings_newsroom_url_uniq
-  on filings (newsroom_id, url) where url is not null;
+-- de-dupe guard: one filing per url per newsroom. A FULL unique constraint
+-- (not a partial index) — NULLs are distinct by default, so multiple null-url
+-- filings are allowed and real URLs still dedupe, AND it can serve as the
+-- arbiter for upsert's ON CONFLICT (newsroom_id, url). A partial index cannot
+-- (Postgres 42P10: no unique constraint matching the ON CONFLICT spec).
+alter table filings
+  add constraint filings_newsroom_url_uniq unique (newsroom_id, url);
 
 -- --- editions (drafts → published articles) ---------------------------------
 create table if not exists editions (
