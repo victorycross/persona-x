@@ -31,7 +31,11 @@ export async function GET(
   const body = edition.body ?? "";
 
   if (format === "html") {
-    const html = `<!doctype html><html><head><meta charset="utf-8"><title>${edition.title}</title></head><body style="max-width:680px;margin:40px auto;font-family:Georgia,serif;line-height:1.6">${renderMarkdown(
+    // Body is sanitised by renderMarkdown (escapes HTML + quotes). The title is
+    // interpolated into markup, so escape it too — defence in depth in case
+    // titles become editable.
+    const title = escapeHtml(edition.title);
+    const html = `<!doctype html><html><head><meta charset="utf-8"><title>${title}</title></head><body style="max-width:680px;margin:40px auto;font-family:Georgia,serif;line-height:1.6">${renderMarkdown(
       body
     )}</body></html>`;
     return new Response(html, {
@@ -48,4 +52,13 @@ export async function GET(
       "Content-Disposition": `attachment; filename="${base}.md"`,
     },
   });
+}
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
