@@ -1,5 +1,9 @@
 # The Newsroom
 
+> ⚠️ **MOVED — frozen copy.** This app now lives in its own repo:
+> **https://github.com/victorycross/Brightpath_Intelligence**. Do future work
+> there; this copy is kept for history only (see `../MOVED.md`).
+
 > Run your own AI research desk. You're the Editor-in-Chief: hire **desks**,
 > assign **beats**, read **the wire**, and put **editions** to bed. Nothing
 > reaches an audience until you sign off.
