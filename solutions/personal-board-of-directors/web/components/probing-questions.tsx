@@ -1,6 +1,9 @@
 "use client";
 
 import { useBoardContext } from "@/lib/board-context";
+import type { ProbingAnswer, ProbingQuestion } from "@/lib/types";
+
+const EMPTY_ANSWER: ProbingAnswer = { selected: [], other: "" };
 
 export function ProbingQuestions() {
   const {
@@ -37,10 +40,14 @@ export function ProbingQuestions() {
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className="rounded-[16px] border border-board-border bg-board-surface px-6 py-7"
+              className="rounded-[16px] border border-board-border bg-board-surface px-6 py-5"
             >
               <div className="h-4 w-3/4 rounded bg-board-surface-raised animate-pulse" />
-              <div className="mt-4 h-20 rounded bg-board-surface-raised animate-pulse" />
+              <div className="mt-4 flex gap-2">
+                {[1, 2, 3].map((j) => (
+                  <div key={j} className="h-8 w-24 rounded-full bg-board-surface-raised animate-pulse" />
+                ))}
+              </div>
             </div>
           ))}
         </div>
@@ -71,38 +78,20 @@ export function ProbingQuestions() {
         Refine Your Decision
       </p>
       <h2 className="text-2xl font-serif text-board-accent mt-1">
-        Before the Board convenes...
+        A few quick questions
       </h2>
       <p className="text-sm text-board-text-secondary mt-2 mb-6">
-        Answer as many as you like to give your advisors richer context.
+        Tap the answers that fit. All optional — skip any that don&apos;t apply.
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {probingQuestions.map((q) => (
-          <div
+          <QuestionCard
             key={q.id}
-            className="rounded-[16px] border border-board-border bg-board-surface px-6 py-5 card-hover"
-          >
-            <label
-              htmlFor={q.id}
-              className="block text-sm font-medium text-board-text mb-2"
-            >
-              {q.question}
-            </label>
-            {q.hint && (
-              <p className="text-xs text-board-text-tertiary mb-3">
-                {q.hint}
-              </p>
-            )}
-            <textarea
-              id={q.id}
-              value={probingAnswers[q.id] ?? ""}
-              onChange={(e) => setProbingAnswer(q.id, e.target.value)}
-              rows={3}
-              className="w-full rounded-[8px] border border-board-border bg-board-bg px-4 py-3 text-sm text-board-text placeholder:text-board-text-tertiary focus:border-board-accent/50 focus:outline-none focus:ring-1 focus:ring-board-accent/30 resize-none"
-              placeholder="Optional — skip if not relevant"
-            />
-          </div>
+            question={q}
+            answer={probingAnswers[q.id] ?? EMPTY_ANSWER}
+            onChange={(answer) => setProbingAnswer(q.id, answer)}
+          />
         ))}
 
         <div className="flex items-center justify-between pt-4">
@@ -121,6 +110,75 @@ export function ProbingQuestions() {
           </button>
         </div>
       </form>
+    </div>
+  );
+}
+
+function QuestionCard({
+  question,
+  answer,
+  onChange,
+}: {
+  question: ProbingQuestion;
+  answer: ProbingAnswer;
+  onChange: (answer: ProbingAnswer) => void;
+}) {
+  function toggle(option: string) {
+    const isSelected = answer.selected.includes(option);
+    const selected = question.multiSelect
+      ? isSelected
+        ? answer.selected.filter((o) => o !== option)
+        : [...answer.selected, option]
+      : isSelected
+        ? []
+        : [option];
+    onChange({ ...answer, selected });
+  }
+
+  return (
+    <div className="rounded-[16px] border border-board-border bg-board-surface px-6 py-5">
+      <p id={`${question.id}-label`} className="text-sm font-medium text-board-text">
+        {question.question}
+      </p>
+      {question.multiSelect && (
+        <p className="mt-0.5 text-xs text-board-text-tertiary">Choose any that apply</p>
+      )}
+
+      <div
+        role={question.multiSelect ? "group" : "radiogroup"}
+        aria-labelledby={`${question.id}-label`}
+        className="mt-3 flex flex-wrap gap-2"
+      >
+        {question.options.map((option) => {
+          const isSelected = answer.selected.includes(option);
+          return (
+            <button
+              key={option}
+              type="button"
+              role={question.multiSelect ? "checkbox" : "radio"}
+              aria-checked={isSelected}
+              onClick={() => toggle(option)}
+              className={`rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors ${
+                isSelected
+                  ? "border-board-accent bg-board-accent/10 text-board-accent"
+                  : "border-board-border text-board-text-secondary hover:border-board-accent/40"
+              }`}
+            >
+              {option}
+            </button>
+          );
+        })}
+      </div>
+
+      <input
+        type="text"
+        aria-label={`Your own answer: ${question.question}`}
+        value={answer.other}
+        onChange={(e) => onChange({ ...answer, other: e.target.value })}
+        placeholder="Or add your own (optional)"
+        maxLength={300}
+        className="field-input mt-3 py-2"
+      />
     </div>
   );
 }

@@ -78,7 +78,15 @@ export type FlowStep =
 export interface ProbingQuestion {
   id: string;
   question: string;
-  hint?: string;
+  /** Short answer choices; the user may also write their own. */
+  options: string[];
+  /** True when more than one option can apply. */
+  multiSelect: boolean;
+}
+
+export interface ProbingAnswer {
+  selected: string[];
+  other: string;
 }
 
 /** Profile assessment types */

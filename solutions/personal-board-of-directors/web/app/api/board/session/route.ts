@@ -3,6 +3,7 @@ import { runBoardSession } from "@/lib/session-stream";
 import { generateAdvocatePersona } from "@/lib/advocate-generator";
 import { checkApiKey } from "@/lib/api-error";
 import type { WebUserProfile } from "@/lib/types";
+import { MAX_DECISION_CONTEXT_CHARS } from "@/lib/profile-summary";
 
 export async function POST(request: NextRequest) {
   const keyError = checkApiKey();
@@ -26,9 +27,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (decision.length > 5000) {
+  if (decision.length > MAX_DECISION_CONTEXT_CHARS) {
     return NextResponse.json(
-      { error: "Decision text must be under 5000 characters" },
+      { error: `Decision context must be under ${MAX_DECISION_CONTEXT_CHARS.toLocaleString("en-AU")} characters` },
       { status: 400 }
     );
   }
