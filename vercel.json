@@ -1,6 +1,3 @@
 {
-  "buildCommand": "cd solutions/personal-board-of-directors/web && npm run build",
-  "outputDirectory": "solutions/personal-board-of-directors/web/.next",
-  "installCommand": "npm install && cd solutions/personal-board-of-directors/web && npm ci",
   "framework": "nextjs"
 }
