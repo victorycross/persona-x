@@ -50,6 +50,9 @@ export default function PrivacyPolicyPage() {
           <p className="mb-3">
             The Persona-X advisory tools on advisors.brightpathtechnology.io use artificial intelligence provided by Anthropic, PBC (United States). Information you enter into these tools is transmitted to Anthropic&rsquo;s API for processing and is subject to <a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener noreferrer" className="text-board-accent underline hover:opacity-80">Anthropic&rsquo;s Privacy Policy</a>.
           </p>
+          <p className="mb-3">
+            If you choose to import your background from a LinkedIn profile export or a résumé, the document or text you provide is sent to Anthropic&rsquo;s API solely to extract a summary that pre-fills your profile form. We do not store the document on our servers. The resulting profile is saved only in your browser&rsquo;s local storage. We do not access your LinkedIn account or retrieve profiles from LinkedIn.
+          </p>
           <p className="font-medium text-board-text">
             Do not enter sensitive personal information, financial account credentials, health information, or confidential business data into these tools.
           </p>
