@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { checkApiKey } from "@/lib/api-error";
+import { checkApiKey, apiErrorResponse } from "@/lib/api-error";
 import { createClient, sendMessage } from "@persona-x/llm/client.js";
 import { parseBoardBrief } from "@/lib/board-brief";
 import type { BoardBrief } from "@/lib/types";
@@ -73,7 +73,6 @@ export async function POST(request: Request): Promise<NextResponse> {
     const improvedBrief = parseBoardBrief(result.content);
     return NextResponse.json({ brief: improvedBrief });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return apiErrorResponse(err, "board/brief/improve");
   }
 }

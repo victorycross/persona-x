@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { checkApiKey } from "@/lib/api-error";
+import { checkApiKey, userFacingErrorMessage } from "@/lib/api-error";
 import { createClient } from "@persona-x/llm/client.js";
 import { LLM_MODEL } from "@/lib/constants";
 import type { GenerateEvent } from "@/lib/biz-case-types";
@@ -71,7 +71,7 @@ export async function POST(request: Request): Promise<Response> {
           encoder.encode(sseEvent({ type: "narrative_complete" }))
         );
       } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
+        const message = userFacingErrorMessage(err, "biz-case/improve");
         controller.enqueue(
           encoder.encode(sseEvent({ type: "error", message }))
         );

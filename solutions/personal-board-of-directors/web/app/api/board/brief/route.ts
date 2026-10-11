@@ -66,6 +66,6 @@ export async function POST(request: NextRequest) {
     const brief = await generateBoardBrief(client, decision, responses);
     return NextResponse.json({ brief });
   } catch (err) {
-    return apiErrorResponse(err);
+    return apiErrorResponse(err, "board/brief");
   }
 }

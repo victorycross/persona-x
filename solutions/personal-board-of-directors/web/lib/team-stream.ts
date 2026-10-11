@@ -7,6 +7,7 @@ import type { RubricDimensionName } from "@persona-x/schema/rubric.js";
 import type { LoadedPersona } from "@persona-x/runtime/interface.js";
 import { generateTeamBrief } from "./team-brief";
 import { LLM_MODEL } from "./constants";
+import { describeAIError, userFacingErrorMessage } from "./api-error";
 import type {
   TeamSessionEvent,
   PersonaResponse,
@@ -234,7 +235,14 @@ export function runTeamSession(
           } catch (err) {
             activeStream = null;
             if (cancelled) break;
-            fullContent = `[Error generating response: ${err instanceof Error ? err.message : String(err)}]`;
+            const described = describeAIError(err, "team/session");
+            if (described.setup) {
+              // Every remaining persona would fail the same way
+              emit({ type: "error", message: described.message });
+              controller.close();
+              return;
+            }
+            fullContent = `[Error generating response: ${described.message}]`;
             emit({ type: "persona_token", personaId: persona.id, token: fullContent });
           }
 
@@ -275,7 +283,7 @@ export function runTeamSession(
         } catch (err) {
           emit({
             type: "error",
-            message: `Failed to generate Team Brief: ${err instanceof Error ? err.message : String(err)}`,
+            message: `Failed to generate Team Brief: ${userFacingErrorMessage(err, "team/session")}`,
           });
         }
 
@@ -288,7 +296,7 @@ export function runTeamSession(
         }
         emit({
           type: "error",
-          message: err instanceof Error ? err.message : String(err),
+          message: userFacingErrorMessage(err, "team/session"),
         });
         controller.close();
       }
