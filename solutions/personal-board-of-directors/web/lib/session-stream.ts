@@ -6,6 +6,7 @@ import type { LoadedPersona } from "@persona-x/runtime/interface.js";
 import { loadBoardPersonas } from "./personas";
 import { generateBoardBrief } from "./board-brief";
 import { LLM_MODEL } from "./constants";
+import { describeAIError, userFacingErrorMessage } from "./api-error";
 import type { BoardSessionEvent, PersonaResponse } from "./types";
 
 /**
@@ -149,7 +150,14 @@ export function runBoardSession(
           } catch (err) {
             activeStream = null;
             if (cancelled) break;
-            fullContent = `[Error generating response: ${err instanceof Error ? err.message : String(err)}]`;
+            const described = describeAIError(err, "board/session");
+            if (described.setup) {
+              // Every remaining persona would fail the same way
+              emit({ type: "error", message: described.message });
+              controller.close();
+              return;
+            }
+            fullContent = `[Error generating response: ${described.message}]`;
             emit({ type: "persona_token", personaId: persona.id, token: fullContent });
           }
 
@@ -178,7 +186,7 @@ export function runBoardSession(
         } catch (err) {
           emit({
             type: "error",
-            message: `Failed to generate Board Brief: ${err instanceof Error ? err.message : String(err)}`,
+            message: `Failed to generate Board Brief: ${userFacingErrorMessage(err, "board/session")}`,
           });
         }
 
@@ -191,7 +199,7 @@ export function runBoardSession(
         }
         emit({
           type: "error",
-          message: err instanceof Error ? err.message : String(err),
+          message: userFacingErrorMessage(err, "board/session"),
         });
         controller.close();
       }

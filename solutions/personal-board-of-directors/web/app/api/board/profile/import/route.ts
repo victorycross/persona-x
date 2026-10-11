@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type Anthropic from "@anthropic-ai/sdk";
-import { checkApiKey, apiErrorResponse } from "@/lib/api-error";
+import { checkApiKey, describeAIError } from "@/lib/api-error";
 import { extractStructured, ExtractionError } from "@/lib/structured-extract";
 import {
   MAX_IMPORT_FILE_BYTES,
@@ -136,7 +136,17 @@ export async function POST(request: Request): Promise<NextResponse> {
         { status: 502 }
       );
     }
-    console.error("[profile/import]", err);
-    return apiErrorResponse(err);
+    const described = describeAIError(err, "profile/import");
+    if (described.code === "AI_BAD_REQUEST") {
+      // Typically a corrupt, encrypted, or image-only PDF the AI service cannot open
+      return NextResponse.json(
+        {
+          error: "We couldn't open that file. If it is password-protected or scanned, try exporting it again or paste the text instead.",
+          code: described.code,
+        },
+        { status: 422 }
+      );
+    }
+    return NextResponse.json({ error: described.message, code: described.code }, { status: described.status });
   }
 }

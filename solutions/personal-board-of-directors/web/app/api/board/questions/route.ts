@@ -61,7 +61,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ questions });
   } catch (err) {
-    console.error("Failed to generate probing questions:", err);
-    return apiErrorResponse(err);
+    return apiErrorResponse(err, "board/questions");
   }
 }

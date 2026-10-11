@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { checkApiKey } from "@/lib/api-error";
+import { checkApiKey, userFacingErrorMessage } from "@/lib/api-error";
 import { createClient } from "@persona-x/llm/client.js";
 import { LLM_MODEL } from "@/lib/constants";
 import type { ProposeEvent } from "@/lib/biz-case-types";
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       } catch (err) {
         emit({
           type: "error",
-          message: err instanceof Error ? err.message : String(err),
+          message: userFacingErrorMessage(err, "biz-case/propose"),
         });
       } finally {
         controller.close();

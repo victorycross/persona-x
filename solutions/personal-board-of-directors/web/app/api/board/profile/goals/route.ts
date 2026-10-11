@@ -101,7 +101,6 @@ export async function POST(request: Request): Promise<NextResponse> {
         { status: 502 }
       );
     }
-    console.error("[profile/goals]", err);
-    return apiErrorResponse(err);
+    return apiErrorResponse(err, "profile/goals");
   }
 }

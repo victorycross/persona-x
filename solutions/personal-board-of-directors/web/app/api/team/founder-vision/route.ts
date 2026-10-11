@@ -1,6 +1,6 @@
 import path from "path";
 import { NextRequest, NextResponse } from "next/server";
-import { checkApiKey } from "@/lib/api-error";
+import { checkApiKey, userFacingErrorMessage } from "@/lib/api-error";
 import { createClient } from "@persona-x/llm/client.js";
 import { loadPersonasForPanel } from "@persona-x/runtime/loader.js";
 import { createPanelSession } from "@persona-x/runtime/panel.js";
@@ -136,7 +136,7 @@ export async function POST(request: NextRequest): Promise<Response> {
         emitEvent(controller, { type: "session_complete" });
         controller.close();
       } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
+        const message = userFacingErrorMessage(err, "team/founder-vision");
         emitEvent(controller, { type: "error", message });
         controller.close();
       }

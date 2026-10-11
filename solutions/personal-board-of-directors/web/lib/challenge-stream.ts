@@ -2,6 +2,7 @@ import { createClient } from "@persona-x/llm/client.js";
 import { createPanelSession, determineSpeakingOrder } from "@persona-x/runtime/panel.js";
 import { loadBoardPersonas } from "./personas";
 import { LLM_MODEL } from "./constants";
+import { userFacingErrorMessage } from "./api-error";
 import type { ChallengeExchange } from "./types";
 
 interface ChallengeStreamParams {
@@ -111,7 +112,7 @@ export function runChallengeStream(params: ChallengeStreamParams): ReadableStrea
         }
         emit({
           type: "error",
-          message: err instanceof Error ? err.message : String(err),
+          message: userFacingErrorMessage(err, "board/challenge"),
         });
         controller.close();
       }

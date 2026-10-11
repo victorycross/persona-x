@@ -2,7 +2,7 @@ import path from "path";
 import { NextRequest, NextResponse } from "next/server";
 
 export const maxDuration = 60;
-import { checkApiKey } from "@/lib/api-error";
+import { checkApiKey, userFacingErrorMessage } from "@/lib/api-error";
 import { createClient } from "@persona-x/llm/client.js";
 import { loadPersonasForPanel } from "@persona-x/runtime/loader.js";
 import { createPanelSession } from "@persona-x/runtime/panel.js";
@@ -131,7 +131,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       } catch (err) {
         emit({
           type: "error",
-          message: err instanceof Error ? err.message : String(err),
+          message: userFacingErrorMessage(err, "biz-case/challenge"),
         });
       } finally {
         controller.close();
