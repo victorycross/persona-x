@@ -311,7 +311,7 @@ export function ProfileForm() {
                   type="text"
                   value={name}
                   onChange={(e) => edit("name")(e.target.value)}
-                  placeholder="Jane Smith"
+                  placeholder="e.g. Jane Smith"
                   className="field-input"
                 />
               </FieldGroup>
@@ -320,7 +320,7 @@ export function ProfileForm() {
                 <textarea
                   value={background}
                   onChange={(e) => edit("background")(e.target.value)}
-                  placeholder="15 years in product management across fintech and SaaS, currently VP Product at a Series B startup..."
+                  placeholder="e.g. 15 years in product management, now VP Product at a startup"
                   rows={3}
                   className="field-input resize-none"
                 />
@@ -350,7 +350,7 @@ export function ProfileForm() {
                   type="text"
                   value={domains}
                   onChange={(e) => edit("domains")(e.target.value)}
-                  placeholder="Product Management, Fintech, SaaS, B2B"
+                  placeholder="e.g. Product Management, Fintech"
                   className="field-input"
                 />
               </FieldGroup>
@@ -359,7 +359,7 @@ export function ProfileForm() {
                 <textarea
                   value={context}
                   onChange={(e) => edit("context")(e.target.value)}
-                  placeholder="Leading product for a startup transitioning from founder-led sales to product-led growth..."
+                  placeholder="e.g. Leading product through a shift to self-serve sales"
                   rows={2}
                   className="field-input resize-none"
                 />
@@ -406,7 +406,7 @@ export function ProfileForm() {
                 <textarea
                   value={primaryGoal}
                   onChange={(e) => edit("primaryGoal")(e.target.value)}
-                  placeholder="Transition the company to product-led growth while maintaining current revenue..."
+                  placeholder="e.g. Move to product-led growth without losing revenue"
                   rows={2}
                   className="field-input resize-none"
                 />
@@ -417,7 +417,7 @@ export function ProfileForm() {
                   type="text"
                   value={successDefinition}
                   onChange={(e) => edit("successDefinition")(e.target.value)}
-                  placeholder="Self-serve pipeline generating 30% of new revenue within 12 months"
+                  placeholder="e.g. 30% of new revenue from self-serve"
                   className="field-input"
                 />
               </FieldGroup>
@@ -446,7 +446,7 @@ export function ProfileForm() {
                   type="text"
                   value={sacrifices}
                   onChange={(e) => edit("sacrifices")(e.target.value)}
-                  placeholder="Short-term revenue dip, additional headcount investment, slower feature velocity"
+                  placeholder="e.g. Short-term revenue dip, slower releases"
                   className="field-input"
                 />
               </FieldGroup>
@@ -456,7 +456,7 @@ export function ProfileForm() {
                   type="text"
                   value={nonNegotiables}
                   onChange={(e) => edit("nonNegotiables")(e.target.value)}
-                  placeholder="Team retention above 85%, no compromise on data security, maintain profitability"
+                  placeholder="e.g. Keep the team intact, stay profitable"
                   className="field-input"
                 />
               </FieldGroup>
@@ -466,7 +466,7 @@ export function ProfileForm() {
                   type="text"
                   value={resourceLimits}
                   onChange={(e) => edit("resourceLimits")(e.target.value)}
-                  placeholder="$500K budget, 6-person team, 12-month runway"
+                  placeholder="e.g. $500K budget, 12-month runway"
                   className="field-input"
                 />
               </FieldGroup>
@@ -476,7 +476,7 @@ export function ProfileForm() {
                   type="text"
                   value={weaknesses}
                   onChange={(e) => setWeaknesses(e.target.value)}
-                  placeholder="Impatient with slow progress, tendency to over-commit"
+                  placeholder="e.g. Tendency to over-commit"
                   className="field-input"
                 />
               </FieldGroup>
@@ -486,7 +486,7 @@ export function ProfileForm() {
                   type="text"
                   value={blindSpots}
                   onChange={(e) => setBlindSpots(e.target.value)}
-                  placeholder="Technical debt implications, team capacity limits"
+                  placeholder="e.g. Team capacity limits"
                   className="field-input"
                 />
               </FieldGroup>

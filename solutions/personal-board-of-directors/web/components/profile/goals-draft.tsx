@@ -66,7 +66,7 @@ export function GoalsDraft({
           setStatement(e.target.value);
           setError(null);
         }}
-        placeholder="I'm weighing whether to leave my director role to start a consultancy within the next six months. I have about a year of savings and won't put the family home at risk…"
+        placeholder="e.g. I'm deciding whether to leave my director role to start a consultancy within six months. I have a year of savings and won't put the family home at risk."
         rows={3}
         maxLength={MAX_GOALS_STATEMENT_CHARS}
         className="field-input resize-y"

@@ -92,7 +92,7 @@ body::before {
 
 /* Form field input */
 .field-input {
-  @apply w-full rounded-[8px] border border-board-border bg-board-bg px-4 py-3 text-sm text-board-text placeholder:text-board-text-tertiary focus:border-board-accent/50 focus:outline-none focus:ring-1 focus:ring-board-accent/30;
+  @apply w-full rounded-[8px] border border-board-border bg-board-bg px-4 py-3 text-sm text-board-text placeholder:text-board-text-tertiary placeholder:italic focus:border-board-accent/50 focus:outline-none focus:ring-1 focus:ring-board-accent/30;
 }
 
 /* Fade-in animation */
