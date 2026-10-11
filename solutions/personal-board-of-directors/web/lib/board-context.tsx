@@ -13,13 +13,15 @@ import {
 import { useBoardSession } from "./use-board-session";
 import { useProfileContext } from "./profile-context";
 import { buildAdvocateProfile } from "./advocate-calibration";
+import { buildProfileContext } from "./profile-summary";
 import type {
   BoardBrief,
   ChallengeExchange,
   FlowStep,
   PersonaProfile,
-  PersonaResponse,
+  ProbingAnswer,
   ProbingQuestion,
+  WebUserProfile,
 } from "./types";
 
 type ChallengeStatus = "idle" | "streaming";
@@ -34,10 +36,15 @@ interface BoardContextValue {
   setDecision: (d: string) => void;
   enrichedDecision: string;
 
+  // Saved judgement profile, shared with every advisor when included
+  userProfile: WebUserProfile | null;
+  includeProfile: boolean;
+  setIncludeProfile: (include: boolean) => void;
+
   // Probing questions
   probingQuestions: ProbingQuestion[];
-  probingAnswers: Record<string, string>;
-  setProbingAnswer: (id: string, value: string) => void;
+  probingAnswers: Record<string, ProbingAnswer>;
+  setProbingAnswer: (id: string, answer: ProbingAnswer) => void;
   questionsLoading: boolean;
   generateProbingQuestions: (decision: string) => Promise<void>;
 
@@ -48,10 +55,6 @@ interface BoardContextValue {
   brief: BoardBrief | null;
   sessionError: ReturnType<typeof useBoardSession>["error"];
   startSession: ReturnType<typeof useBoardSession>["startSession"];
-
-  // Persona navigation
-  currentPersonaIndex: number;
-  setCurrentPersonaIndex: (i: number) => void;
 
   // Profiles
   profiles: PersonaProfile[];
@@ -79,13 +82,18 @@ export function BoardProvider({ children }: { children: ReactNode }) {
   const [step, setStepRaw] = useState<FlowStep>("decision_input");
   const [decision, setDecision] = useState("");
   const [probingQuestions, setProbingQuestions] = useState<ProbingQuestion[]>([]);
-  const [probingAnswers, setProbingAnswers] = useState<Record<string, string>>({});
+  const [probingAnswers, setProbingAnswers] = useState<Record<string, ProbingAnswer>>({});
   const [questionsLoading, setQuestionsLoading] = useState(false);
-  const [currentPersonaIndex, setCurrentPersonaIndex] = useState(0);
   const [profiles, setProfiles] = useState<PersonaProfile[]>([]);
 
-  // User profile (for advocate persona)
+  // User profile: context for every advisor, and the basis of the advocate persona
   const { profile: userProfile } = useProfileContext();
+  const [includeProfile, setIncludeProfile] = useState(true);
+  const activeProfile = includeProfile ? userProfile : null;
+  const profileContext = useMemo(
+    () => (activeProfile ? buildProfileContext(activeProfile) : ""),
+    [activeProfile]
+  );
 
   // Challenge state
   const [challengeStatus, setChallengeStatus] = useState<ChallengeStatus>("idle");
@@ -102,38 +110,33 @@ export function BoardProvider({ children }: { children: ReactNode }) {
 
   // Wrap startSession to automatically include user profile for advocate generation
   const startSession = useCallback(
-    (decision: string) => rawStartSession(decision, userProfile),
-    [rawStartSession, userProfile]
+    (decision: string) => rawStartSession(decision, activeProfile),
+    [rawStartSession, activeProfile]
   );
 
   // Use regenerated brief if available, otherwise use session brief
   const brief = regeneratedBrief ?? sessionBrief;
 
-  // Track the previous response count so we can auto-advance
-  const prevResponseCountRef = useRef(0);
-  // Track whether user has manually navigated
-  const userNavigatedRef = useRef(false);
-
-  // Load persona profiles on mount, include advocate if user has a profile
+  // Load persona profiles on mount, include advocate if the user's profile is in use
   useEffect(() => {
     fetch("/api/board/personas")
       .then((res) => res.json())
       .then((data) => {
         const baseProfiles: PersonaProfile[] = data.personas ?? [];
-        if (userProfile) {
-          const advocateProfile = buildAdvocateProfile(userProfile);
+        if (activeProfile) {
+          const advocateProfile = buildAdvocateProfile(activeProfile);
           setProfiles([...baseProfiles, advocateProfile]);
         } else {
           setProfiles(baseProfiles);
         }
       })
       .catch(console.error);
-  }, [userProfile]);
+  }, [activeProfile]);
 
-  // Build enriched decision from original + probing Q&A
+  // Build enriched decision from original + profile + probing Q&A
   const enrichedDecision = useMemo(
-    () => buildEnrichedDecision(decision, probingQuestions, probingAnswers),
-    [decision, probingQuestions, probingAnswers]
+    () => buildEnrichedDecision(decision, probingQuestions, probingAnswers, profileContext),
+    [decision, probingQuestions, probingAnswers, profileContext]
   );
 
   // Generate probing questions from the API
@@ -143,7 +146,7 @@ export function BoardProvider({ children }: { children: ReactNode }) {
       const res = await fetch("/api/board/questions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ decision: decisionText }),
+        body: JSON.stringify({ decision: decisionText, profileContext }),
       });
       if (!res.ok) throw new Error("Failed to generate questions");
       const data = await res.json();
@@ -155,10 +158,10 @@ export function BoardProvider({ children }: { children: ReactNode }) {
     } finally {
       setQuestionsLoading(false);
     }
-  }, []);
+  }, [profileContext]);
 
-  const setProbingAnswer = useCallback((id: string, value: string) => {
-    setProbingAnswers((prev) => ({ ...prev, [id]: value }));
+  const setProbingAnswer = useCallback((id: string, answer: ProbingAnswer) => {
+    setProbingAnswers((prev) => ({ ...prev, [id]: answer }));
   }, []);
 
   // Abort any in-flight challenge and remove the incomplete exchange
@@ -380,28 +383,8 @@ export function BoardProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (step === "consulting_board" && responses.length > 0) {
       setStepRaw("persona_review");
-      setCurrentPersonaIndex(0);
-      prevResponseCountRef.current = responses.length;
-      userNavigatedRef.current = false;
     }
   }, [step, responses.length]);
-
-  // Auto-advance persona index as new personas stream in (only if user is on the latest)
-  useEffect(() => {
-    if (step === "persona_review" && responses.length > prevResponseCountRef.current) {
-      if (!userNavigatedRef.current) {
-        setCurrentPersonaIndex(responses.length - 1);
-      }
-      prevResponseCountRef.current = responses.length;
-    }
-  }, [step, responses.length]);
-
-  // Wrap setCurrentPersonaIndex to track manual navigation + abort challenge
-  const handleSetCurrentPersonaIndex = useCallback((i: number) => {
-    abortChallenge();
-    userNavigatedRef.current = true;
-    setCurrentPersonaIndex(i);
-  }, [abortChallenge]);
 
   return (
     <BoardContext.Provider
@@ -411,6 +394,9 @@ export function BoardProvider({ children }: { children: ReactNode }) {
         decision,
         setDecision,
         enrichedDecision,
+        userProfile,
+        includeProfile,
+        setIncludeProfile,
         probingQuestions,
         probingAnswers,
         setProbingAnswer,
@@ -422,8 +408,6 @@ export function BoardProvider({ children }: { children: ReactNode }) {
         brief,
         sessionError: sessionError,
         startSession,
-        currentPersonaIndex,
-        setCurrentPersonaIndex: handleSetCurrentPersonaIndex,
         profiles,
         challengeStatus,
         startChallenge,
@@ -438,17 +422,25 @@ export function BoardProvider({ children }: { children: ReactNode }) {
   );
 }
 
+export function formatProbingAnswer(answer: ProbingAnswer | undefined): string {
+  if (!answer) return "";
+  return [...answer.selected, answer.other.trim()].filter(Boolean).join("; ");
+}
+
 function buildEnrichedDecision(
   decision: string,
   questions: ProbingQuestion[],
-  answers: Record<string, string>
+  answers: Record<string, ProbingAnswer>,
+  profileContext: string
 ): string {
   const answeredQuestions = questions
-    .filter((q) => answers[q.id]?.trim())
-    .map((q) => `Q: ${q.question}\nA: ${answers[q.id].trim()}`)
+    .map((q) => ({ q, a: formatProbingAnswer(answers[q.id]) }))
+    .filter(({ a }) => a)
+    .map(({ q, a }) => `Q: ${q.question}\nA: ${a}`)
     .join("\n\n");
 
-  if (!answeredQuestions) return decision;
-
-  return `${decision}\n\n--- Additional Context ---\n\n${answeredQuestions}`;
+  const sections = [decision];
+  if (profileContext) sections.push(`--- About Me (from my profile) ---\n\n${profileContext}`);
+  if (answeredQuestions) sections.push(`--- Additional Context ---\n\n${answeredQuestions}`);
+  return sections.join("\n\n");
 }

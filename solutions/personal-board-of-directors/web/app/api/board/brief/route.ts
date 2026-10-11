@@ -3,6 +3,7 @@ import { createClient } from "@persona-x/llm/client.js";
 import { generateBoardBrief } from "@/lib/board-brief";
 import type { PersonaResponse } from "@/lib/types";
 import { checkApiKey, apiErrorResponse } from "@/lib/api-error";
+import { MAX_DECISION_CONTEXT_CHARS } from "@/lib/profile-summary";
 
 export async function POST(request: NextRequest) {
   const keyError = checkApiKey();
@@ -31,9 +32,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (decision.length > 5000) {
+  if (decision.length > MAX_DECISION_CONTEXT_CHARS) {
     return NextResponse.json(
-      { error: "Decision text must be under 5000 characters" },
+      { error: `Decision context must be under ${MAX_DECISION_CONTEXT_CHARS.toLocaleString("en-AU")} characters` },
       { status: 400 }
     );
   }

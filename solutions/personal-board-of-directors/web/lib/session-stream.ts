@@ -48,7 +48,9 @@ function buildPersonaUserMessage(
 Your strongest rubric influences for this response:
 ${influenceNote}
 
-Provide your perspective as ${persona.file.metadata.name}. Be specific, concrete, and actionable. Structure your response with:
+Provide your perspective as ${persona.file.metadata.name}. Be specific, concrete, and actionable.
+
+Begin with a single line in the form "Bottom line: <one sentence stating your overall recommendation>". Then structure the rest of your response with:
 1. Your initial reaction and analysis
 2. Key concerns or opportunities from your perspective
 3. Your specific recommendation
