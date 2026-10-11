@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import { useProfileContext } from "@/lib/profile-context";
 import { PROFILE_QUESTION_BANK, scoreResponses } from "@/lib/profile-questions";
 import { RubricChart } from "@/components/rubric-chart";
+import { ProfileImport } from "@/components/profile/profile-import";
+import { GoalsDraft } from "@/components/profile/goals-draft";
+import type { GoalsDraftResult, ProfileImportResult } from "@/lib/profile-import";
 import type {
   ProfileStep,
   SeniorityLevel,
@@ -37,6 +40,67 @@ const STEP_LABELS: Record<ProfileStep, string> = {
 
 const STEPS: ProfileStep[] = ["about", "goals", "assessment", "complete"];
 
+/** Fields that can be pre-filled from an import or goals draft. */
+type FieldKey =
+  | "name"
+  | "background"
+  | "seniorityLevel"
+  | "domains"
+  | "context"
+  | "primaryGoal"
+  | "successDefinition"
+  | "timeHorizon"
+  | "sacrifices"
+  | "nonNegotiables"
+  | "resourceLimits";
+
+const CHOICE_FIELDS: ReadonlySet<FieldKey> = new Set(["seniorityLevel", "timeHorizon"]);
+
+const FIELD_LABELS: Record<FieldKey, string> = {
+  name: "Your Name",
+  background: "Professional Background",
+  seniorityLevel: "Seniority Level",
+  domains: "Experience Domains",
+  context: "Current Context",
+  primaryGoal: "Primary Goal",
+  successDefinition: "Success Definition",
+  timeHorizon: "Time Horizon",
+  sacrifices: "Acceptable Sacrifices",
+  nonNegotiables: "Non-Negotiables",
+  resourceLimits: "Resource Limits",
+};
+
+const ABOUT_FIELDS: ReadonlySet<FieldKey> = new Set(["name", "background", "seniorityLevel", "domains", "context"]);
+const GOALS_FIELDS: ReadonlySet<FieldKey> = new Set(
+  (Object.keys(FIELD_LABELS) as FieldKey[]).filter((k) => !ABOUT_FIELDS.has(k))
+);
+
+interface Suggestion {
+  key: FieldKey;
+  value: string;
+}
+
+function importToSuggestions(r: ProfileImportResult): Suggestion[] {
+  return [
+    { key: "name", value: r.name },
+    { key: "background", value: r.background },
+    { key: "domains", value: r.experienceDomains.join(", ") },
+    { key: "seniorityLevel", value: r.seniorityLevel ?? "" },
+    { key: "context", value: r.context },
+  ];
+}
+
+function goalsToSuggestions(r: GoalsDraftResult): Suggestion[] {
+  return [
+    { key: "primaryGoal", value: r.primaryGoal },
+    { key: "successDefinition", value: r.successDefinition },
+    { key: "timeHorizon", value: r.timeHorizon ?? "" },
+    { key: "sacrifices", value: r.sacrificesAcceptable.join(", ") },
+    { key: "nonNegotiables", value: r.nonNegotiables.join(", ") },
+    { key: "resourceLimits", value: r.resourceLimits },
+  ];
+}
+
 export function ProfileForm() {
   const router = useRouter();
   const { profile: existingProfile, saveProfile } = useProfileContext();
@@ -61,6 +125,89 @@ export function ProfileForm() {
 
   // Assessment
   const [responses, setResponses] = useState<Record<string, number>>({});
+
+  // Import / draft suggestions. "suggested" fields carry a review badge until
+  // edited; "touched" fields were set by the user and are never overwritten
+  // without confirmation.
+  const [suggested, setSuggested] = useState<Set<FieldKey>>(new Set());
+  const [touched, setTouched] = useState<Set<FieldKey>>(
+    () => new Set<FieldKey>(existingProfile ? ["seniorityLevel", "timeHorizon"] : [])
+  );
+  const [conflicts, setConflicts] = useState<Suggestion[]>([]);
+
+  const fieldValues: Record<FieldKey, string> = {
+    name, background, seniorityLevel, domains, context,
+    primaryGoal, successDefinition, timeHorizon, sacrifices, nonNegotiables, resourceLimits,
+  };
+
+  const fieldSetters: Record<FieldKey, (v: string) => void> = {
+    name: setName,
+    background: setBackground,
+    seniorityLevel: (v) => setSeniorityLevel(v as SeniorityLevel),
+    domains: setDomains,
+    context: setContext,
+    primaryGoal: setPrimaryGoal,
+    successDefinition: setSuccessDefinition,
+    timeHorizon: (v) => setTimeHorizon(v as TimeHorizon),
+    sacrifices: setSacrifices,
+    nonNegotiables: setNonNegotiables,
+    resourceLimits: setResourceLimits,
+  };
+
+  /** Wrap a setter so a manual edit clears the "suggested" badge. */
+  const edit = (key: FieldKey) => (value: string) => {
+    fieldSetters[key](value);
+    setTouched((prev) => new Set(prev).add(key));
+    setSuggested((prev) => {
+      if (!prev.has(key)) return prev;
+      const next = new Set(prev);
+      next.delete(key);
+      return next;
+    });
+  };
+
+  const applySuggestions = (items: Suggestion[], force = false) => {
+    const applied: FieldKey[] = [];
+    const held: Suggestion[] = [];
+
+    for (const s of items) {
+      if (!s.value.trim()) continue;
+      const current = fieldValues[s.key];
+      if (current.trim() === s.value.trim()) continue;
+      const userOwned = CHOICE_FIELDS.has(s.key)
+        ? touched.has(s.key)
+        : touched.has(s.key) || (current.trim() !== "" && !suggested.has(s.key));
+      if (userOwned && !force) {
+        held.push(s);
+        continue;
+      }
+      fieldSetters[s.key](s.value);
+      applied.push(s.key);
+    }
+
+    setSuggested((prev) => new Set([...prev, ...applied]));
+    if (force) {
+      setTouched((prev) => {
+        const next = new Set(prev);
+        applied.forEach((k) => next.delete(k));
+        return next;
+      });
+    }
+    setConflicts((prev) => [
+      ...prev.filter((c) => !items.some((s) => s.key === c.key)),
+      ...held,
+    ]);
+  };
+
+  const replaceConflicts = (keys: ReadonlySet<FieldKey>) => {
+    const toApply = conflicts.filter((c) => keys.has(c.key));
+    applySuggestions(toApply, true);
+    setConflicts((prev) => prev.filter((c) => !keys.has(c.key)));
+  };
+
+  const dismissConflicts = (keys: ReadonlySet<FieldKey>) => {
+    setConflicts((prev) => prev.filter((c) => !keys.has(c.key)));
+  };
 
   const handleResponse = useCallback((questionId: string, optionIndex: number) => {
     setResponses((prev) => ({ ...prev, [questionId]: optionIndex }));
@@ -145,6 +292,13 @@ export function ProfileForm() {
 
       {step === "about" && (
         <div className="space-y-6">
+          <ProfileImport onImported={(r) => applySuggestions(importToSuggestions(r))} />
+          <ConflictNotice
+            conflicts={conflicts.filter((c) => ABOUT_FIELDS.has(c.key))}
+            onReplace={() => replaceConflicts(ABOUT_FIELDS)}
+            onKeep={() => dismissConflicts(ABOUT_FIELDS)}
+          />
+
           <div className="rounded-[16px] border border-board-border bg-board-surface px-6 py-7">
             <h2 className="text-2xl font-serif text-board-text mb-1">About You</h2>
             <p className="text-sm text-board-text-secondary mb-5">
@@ -152,33 +306,33 @@ export function ProfileForm() {
             </p>
 
             <div className="space-y-4">
-              <FieldGroup label="Your Name">
+              <FieldGroup label="Your Name" suggested={suggested.has("name")}>
                 <input
                   type="text"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Jane Smith"
+                  onChange={(e) => edit("name")(e.target.value)}
+                  placeholder="e.g. Jane Smith"
                   className="field-input"
                 />
               </FieldGroup>
 
-              <FieldGroup label="Professional Background" hint="A brief summary of your career and expertise">
+              <FieldGroup label="Professional Background" suggested={suggested.has("background")} hint="A brief summary of your career and expertise">
                 <textarea
                   value={background}
-                  onChange={(e) => setBackground(e.target.value)}
-                  placeholder="15 years in product management across fintech and SaaS, currently VP Product at a Series B startup..."
+                  onChange={(e) => edit("background")(e.target.value)}
+                  placeholder="e.g. 15 years in product management, now VP Product at a startup"
                   rows={3}
                   className="field-input resize-none"
                 />
               </FieldGroup>
 
-              <FieldGroup label="Seniority Level">
+              <FieldGroup label="Seniority Level" suggested={suggested.has("seniorityLevel")}>
                 <div className="flex flex-wrap gap-2">
                   {SENIORITY_OPTIONS.map((opt) => (
                     <button
                       key={opt.value}
                       type="button"
-                      onClick={() => setSeniorityLevel(opt.value)}
+                      onClick={() => edit("seniorityLevel")(opt.value)}
                       className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
                         seniorityLevel === opt.value
                           ? "border-board-accent bg-board-accent/10 text-board-accent"
@@ -191,21 +345,21 @@ export function ProfileForm() {
                 </div>
               </FieldGroup>
 
-              <FieldGroup label="Experience Domains" hint="Separate with commas">
+              <FieldGroup label="Experience Domains" suggested={suggested.has("domains")} hint="Separate with commas">
                 <input
                   type="text"
                   value={domains}
-                  onChange={(e) => setDomains(e.target.value)}
-                  placeholder="Product Management, Fintech, SaaS, B2B"
+                  onChange={(e) => edit("domains")(e.target.value)}
+                  placeholder="e.g. Product Management, Fintech"
                   className="field-input"
                 />
               </FieldGroup>
 
-              <FieldGroup label="Current Context" hint="What situation or role context are you in right now?">
+              <FieldGroup label="Current Context" suggested={suggested.has("context")} hint="What situation or role context are you in right now?">
                 <textarea
                   value={context}
-                  onChange={(e) => setContext(e.target.value)}
-                  placeholder="Leading product for a startup transitioning from founder-led sales to product-led growth..."
+                  onChange={(e) => edit("context")(e.target.value)}
+                  placeholder="e.g. Leading product through a shift to self-serve sales"
                   rows={2}
                   className="field-input resize-none"
                 />
@@ -226,6 +380,21 @@ export function ProfileForm() {
 
       {step === "goals" && (
         <div className="space-y-6">
+          <GoalsDraft
+            about={{
+              background: background.trim() || undefined,
+              seniorityLevel,
+              experienceDomains: splitCommas(domains),
+              context: context.trim() || undefined,
+            }}
+            onDrafted={(r) => applySuggestions(goalsToSuggestions(r))}
+          />
+          <ConflictNotice
+            conflicts={conflicts.filter((c) => !ABOUT_FIELDS.has(c.key))}
+            onReplace={() => replaceConflicts(GOALS_FIELDS)}
+            onKeep={() => dismissConflicts(GOALS_FIELDS)}
+          />
+
           <div className="rounded-[16px] border border-board-border bg-board-surface px-6 py-7">
             <h2 className="text-2xl font-serif text-board-text mb-1">Goals & Constraints</h2>
             <p className="text-sm text-board-text-secondary mb-5">
@@ -233,33 +402,33 @@ export function ProfileForm() {
             </p>
 
             <div className="space-y-4">
-              <FieldGroup label="Primary Goal" hint="What are you trying to achieve?">
+              <FieldGroup label="Primary Goal" suggested={suggested.has("primaryGoal")} hint="What are you trying to achieve?">
                 <textarea
                   value={primaryGoal}
-                  onChange={(e) => setPrimaryGoal(e.target.value)}
-                  placeholder="Transition the company to product-led growth while maintaining current revenue..."
+                  onChange={(e) => edit("primaryGoal")(e.target.value)}
+                  placeholder="e.g. Move to product-led growth without losing revenue"
                   rows={2}
                   className="field-input resize-none"
                 />
               </FieldGroup>
 
-              <FieldGroup label="Success Definition" hint="What does a good outcome look like?">
+              <FieldGroup label="Success Definition" suggested={suggested.has("successDefinition")} hint="What does a good outcome look like?">
                 <input
                   type="text"
                   value={successDefinition}
-                  onChange={(e) => setSuccessDefinition(e.target.value)}
-                  placeholder="Self-serve pipeline generating 30% of new revenue within 12 months"
+                  onChange={(e) => edit("successDefinition")(e.target.value)}
+                  placeholder="e.g. 30% of new revenue from self-serve"
                   className="field-input"
                 />
               </FieldGroup>
 
-              <FieldGroup label="Time Horizon">
+              <FieldGroup label="Time Horizon" suggested={suggested.has("timeHorizon")}>
                 <div className="flex flex-wrap gap-2">
                   {TIME_HORIZON_OPTIONS.map((opt) => (
                     <button
                       key={opt.value}
                       type="button"
-                      onClick={() => setTimeHorizon(opt.value)}
+                      onClick={() => edit("timeHorizon")(opt.value)}
                       className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
                         timeHorizon === opt.value
                           ? "border-board-accent bg-board-accent/10 text-board-accent"
@@ -272,32 +441,32 @@ export function ProfileForm() {
                 </div>
               </FieldGroup>
 
-              <FieldGroup label="Acceptable Sacrifices" hint="What are you willing to trade off? Separate with commas">
+              <FieldGroup label="Acceptable Sacrifices" suggested={suggested.has("sacrifices")} hint="What are you willing to trade off? Separate with commas">
                 <input
                   type="text"
                   value={sacrifices}
-                  onChange={(e) => setSacrifices(e.target.value)}
-                  placeholder="Short-term revenue dip, additional headcount investment, slower feature velocity"
+                  onChange={(e) => edit("sacrifices")(e.target.value)}
+                  placeholder="e.g. Short-term revenue dip, slower releases"
                   className="field-input"
                 />
               </FieldGroup>
 
-              <FieldGroup label="Non-Negotiables" hint="Hard constraints that cannot be compromised. Separate with commas">
+              <FieldGroup label="Non-Negotiables" suggested={suggested.has("nonNegotiables")} hint="Hard constraints that cannot be compromised. Separate with commas">
                 <input
                   type="text"
                   value={nonNegotiables}
-                  onChange={(e) => setNonNegotiables(e.target.value)}
-                  placeholder="Team retention above 85%, no compromise on data security, maintain profitability"
+                  onChange={(e) => edit("nonNegotiables")(e.target.value)}
+                  placeholder="e.g. Keep the team intact, stay profitable"
                   className="field-input"
                 />
               </FieldGroup>
 
-              <FieldGroup label="Resource Limits" hint="Budget, time, or capacity constraints">
+              <FieldGroup label="Resource Limits" suggested={suggested.has("resourceLimits")} hint="Budget, time, or capacity constraints">
                 <input
                   type="text"
                   value={resourceLimits}
-                  onChange={(e) => setResourceLimits(e.target.value)}
-                  placeholder="$500K budget, 6-person team, 12-month runway"
+                  onChange={(e) => edit("resourceLimits")(e.target.value)}
+                  placeholder="e.g. $500K budget, 12-month runway"
                   className="field-input"
                 />
               </FieldGroup>
@@ -307,7 +476,7 @@ export function ProfileForm() {
                   type="text"
                   value={weaknesses}
                   onChange={(e) => setWeaknesses(e.target.value)}
-                  placeholder="Impatient with slow progress, tendency to over-commit"
+                  placeholder="e.g. Tendency to over-commit"
                   className="field-input"
                 />
               </FieldGroup>
@@ -317,7 +486,7 @@ export function ProfileForm() {
                   type="text"
                   value={blindSpots}
                   onChange={(e) => setBlindSpots(e.target.value)}
-                  placeholder="Technical debt implications, team capacity limits"
+                  placeholder="e.g. Team capacity limits"
                   className="field-input"
                 />
               </FieldGroup>
@@ -502,18 +671,68 @@ function ProfileComplete({
   );
 }
 
+function ConflictNotice({
+  conflicts,
+  onReplace,
+  onKeep,
+}: {
+  conflicts: Suggestion[];
+  onReplace: () => void;
+  onKeep: () => void;
+}) {
+  if (conflicts.length === 0) return null;
+  return (
+    <div
+      role="status"
+      className="rounded-[12px] border border-board-border bg-board-surface-raised px-5 py-4 text-sm"
+    >
+      <p className="text-board-text mb-1">
+        We kept {conflicts.length === 1 ? "a field" : `${conflicts.length} fields`} you had already filled in:
+      </p>
+      <p className="text-xs text-board-text-secondary mb-3">
+        {conflicts.map((c) => FIELD_LABELS[c.key]).join(", ")}
+      </p>
+      <div className="flex gap-3">
+        <button
+          type="button"
+          onClick={onReplace}
+          className="text-xs font-medium text-board-accent hover:underline"
+        >
+          Replace with suggestions
+        </button>
+        <button
+          type="button"
+          onClick={onKeep}
+          className="text-xs text-board-text-tertiary hover:text-board-text-secondary"
+        >
+          Keep mine
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function FieldGroup({
   label,
   hint,
+  suggested,
   children,
 }: {
   label: string;
   hint?: string;
+  suggested?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-board-text mb-1">{label}</label>
+      <label className="flex items-center gap-2 text-sm font-medium text-board-text mb-1">
+        {label}
+        {suggested && (
+          <span className="flex-shrink-0 rounded-full bg-board-accent/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-board-accent">
+            Suggested
+          </span>
+        )}
+      </label>
       {hint && <p className="text-xs text-board-text-tertiary mb-1.5">{hint}</p>}
       {children}
     </div>
