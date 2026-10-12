@@ -113,6 +113,8 @@ export interface WebUserProfile {
   knownWeaknesses: string[];
   blindSpots: string[];
   patterns: string[];
+  /** Scenario answers (question id → option index), kept so the assessment can be extended later. */
+  assessmentResponses?: Record<string, number>;
   rubric: {
     risk_appetite: RubricScoreDisplay;
     evidence_threshold: RubricScoreDisplay;
@@ -131,6 +133,8 @@ export interface ProfileQuestionOption {
 
 export interface ProfileQuestion {
   id: string;
+  /** core scenarios are required; extended ones are optional extra precision */
+  tier: "core" | "extended";
   category: string;
   scenario: string;
   context: string;

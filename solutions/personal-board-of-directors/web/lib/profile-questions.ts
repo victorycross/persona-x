@@ -94,9 +94,16 @@ export function scoreResponses(responses: ProfileQuestionResponse[]): RubricProf
   return profile as RubricProfile;
 }
 
+/**
+ * Scenario bank. Each scenario scores two rubric dimensions.
+ *
+ * - core (6): required; every dimension is measured exactly twice.
+ * - extended (3): optional extra precision; each dimension gets a third reading.
+ */
 export const PROFILE_QUESTION_BANK: ProfileQuestion[] = [
   {
     id: "risk_evidence_01",
+    tier: "core",
     category: "Risk & Evidence",
     scenario:
       "A promising opportunity lands on your desk with strong potential upside but limited data to back it up. The window closes in 48 hours.",
@@ -110,35 +117,8 @@ export const PROFILE_QUESTION_BANK: ProfileQuestion[] = [
     ],
   },
   {
-    id: "risk_evidence_02",
-    category: "Risk & Evidence",
-    scenario:
-      "Your team proposes a significant strategic pivot. Their presentation is compelling but relies heavily on anecdotal evidence and market intuition.",
-    context:
-      "The current strategy is safe but showing diminishing returns. Competitor activity suggests the market is shifting.",
-    options: [
-      { label: "Reject the pivot until they bring quantitative market research and financial modelling", scores: { risk_appetite: 2, evidence_threshold: 9 } },
-      { label: "Ask for a structured pilot with defined metrics before committing fully", scores: { risk_appetite: 5, evidence_threshold: 6 } },
-      { label: "Approve a time-boxed experiment with limited resources to test the thesis", scores: { risk_appetite: 7, evidence_threshold: 4 } },
-      { label: "Back the pivot — market intuition from experienced operators is evidence enough", scores: { risk_appetite: 9, evidence_threshold: 2 } },
-    ],
-  },
-  {
-    id: "evidence_rigour_01",
-    category: "Evidence & Rigour",
-    scenario:
-      "You receive a consultant's report recommending a major operational change. The methodology section is thin but the conclusions align with your instincts.",
-    context:
-      "The change would affect 200+ people. Reversing it would take 6 months.",
-    options: [
-      { label: "Send the report back — you need to understand the methodology before acting on conclusions", scores: { evidence_threshold: 9, delivery_vs_rigour_bias: 2 } },
-      { label: "Accept the conclusions provisionally but commission an independent review before implementation", scores: { evidence_threshold: 7, delivery_vs_rigour_bias: 4 } },
-      { label: "Start planning implementation while requesting methodology clarification in parallel", scores: { evidence_threshold: 4, delivery_vs_rigour_bias: 7 } },
-      { label: "Move forward — the conclusions match reality and waiting for perfect methodology is a luxury", scores: { evidence_threshold: 2, delivery_vs_rigour_bias: 9 } },
-    ],
-  },
-  {
     id: "ambiguity_01",
+    tier: "core",
     category: "Ambiguity & Clarity",
     scenario:
       "You are leading a project where the client keeps changing requirements. The team is frustrated and progress is stalling.",
@@ -152,21 +132,8 @@ export const PROFILE_QUESTION_BANK: ProfileQuestion[] = [
     ],
   },
   {
-    id: "ambiguity_02",
-    category: "Ambiguity & Clarity",
-    scenario:
-      "You are asked to make a hiring decision for a critical role. Two finalists are close, and your team is split.",
-    context:
-      "The role has been open for 3 months. Each additional week costs the team productivity.",
-    options: [
-      { label: "Run additional assessment rounds until a clear winner emerges", scores: { tolerance_for_ambiguity: 2, delivery_vs_rigour_bias: 2 } },
-      { label: "Define the three most critical criteria and score both candidates objectively", scores: { tolerance_for_ambiguity: 4, delivery_vs_rigour_bias: 4 } },
-      { label: "Pick the one whose strengths best match the immediate project needs", scores: { tolerance_for_ambiguity: 7, delivery_vs_rigour_bias: 7 } },
-      { label: "Trust your gut — both are qualified, and speed of decision matters more than marginal differences", scores: { tolerance_for_ambiguity: 9, delivery_vs_rigour_bias: 9 } },
-    ],
-  },
-  {
     id: "intervention_01",
+    tier: "core",
     category: "Intervention & Delegation",
     scenario:
       "A direct report is managing a high-stakes client relationship. You hear through informal channels that the client is unhappy but your report says everything is fine.",
@@ -180,21 +147,8 @@ export const PROFILE_QUESTION_BANK: ProfileQuestion[] = [
     ],
   },
   {
-    id: "intervention_02",
-    category: "Intervention & Delegation",
-    scenario:
-      "During a board presentation, a colleague presents data you believe is materially misleading. Correcting them publicly would be awkward.",
-    context:
-      "The board is about to make a funding decision based on this data. Your colleague outranks you.",
-    options: [
-      { label: "Raise it immediately in the meeting — accuracy matters more than comfort", scores: { intervention_frequency: 9, escalation_bias: 8 } },
-      { label: "Ask a clarifying question that surfaces the discrepancy without direct confrontation", scores: { intervention_frequency: 7, escalation_bias: 5 } },
-      { label: "Note it and raise it privately with your colleague after the meeting", scores: { intervention_frequency: 4, escalation_bias: 3 } },
-      { label: "Let it go — they may have context you do not, and the board will do its own due diligence", scores: { intervention_frequency: 2, escalation_bias: 2 } },
-    ],
-  },
-  {
     id: "escalation_01",
+    tier: "core",
     category: "Escalation & Boundaries",
     scenario:
       "A compliance issue surfaces in a project you oversee. It is likely technical rather than substantive, but you are not certain.",
@@ -208,21 +162,8 @@ export const PROFILE_QUESTION_BANK: ProfileQuestion[] = [
     ],
   },
   {
-    id: "speed_rigour_01",
-    category: "Speed vs Thoroughness",
-    scenario:
-      "A product launch is scheduled for next week. QA has found minor issues that are unlikely to affect users but technically violate your quality standards.",
-    context:
-      "Delaying costs $50K per day in marketing spend already committed. The issues are cosmetic, not functional.",
-    options: [
-      { label: "Delay the launch — standards exist for a reason and exceptions become precedents", scores: { delivery_vs_rigour_bias: 2, risk_appetite: 2 } },
-      { label: "Launch with a documented exception and a committed fix date within 2 weeks", scores: { delivery_vs_rigour_bias: 6, risk_appetite: 5 } },
-      { label: "Launch now, fix in the first patch — users will not notice these issues", scores: { delivery_vs_rigour_bias: 8, risk_appetite: 7 } },
-      { label: "Launch immediately — the commercial cost of delay far outweighs cosmetic imperfections", scores: { delivery_vs_rigour_bias: 9, risk_appetite: 9 } },
-    ],
-  },
-  {
     id: "speed_rigour_02",
+    tier: "core",
     category: "Speed vs Thoroughness",
     scenario:
       "You need to submit a proposal to a potential partner. You have a solid draft but limited time to refine it.",
@@ -236,21 +177,8 @@ export const PROFILE_QUESTION_BANK: ProfileQuestion[] = [
     ],
   },
   {
-    id: "risk_escalation_01",
-    category: "Risk & Escalation",
-    scenario:
-      "A key supplier notifies you of potential delays that could affect a major delivery. The probability is uncertain — they estimate 30%.",
-    context:
-      "You have alternative suppliers but switching mid-project adds cost and complexity. Your client expects on-time delivery.",
-    options: [
-      { label: "Notify the client immediately and begin activating the alternative supplier", scores: { risk_appetite: 2, escalation_bias: 9 } },
-      { label: "Prepare a contingency plan with the alternative supplier but hold off on client notification until probability exceeds 50%", scores: { risk_appetite: 4, escalation_bias: 5 } },
-      { label: "Monitor the situation closely with weekly check-ins and only act if the delay materialises", scores: { risk_appetite: 7, escalation_bias: 3 } },
-      { label: "Accept the risk — 30% is low, switching suppliers is expensive, and the current one will likely deliver", scores: { risk_appetite: 9, escalation_bias: 2 } },
-    ],
-  },
-  {
     id: "ambiguity_speed_01",
+    tier: "core",
     category: "Ambiguity & Speed",
     scenario:
       "Your organisation is restructuring and your role is uncertain. You have been asked to continue delivering while the new structure is finalised.",
@@ -263,4 +191,52 @@ export const PROFILE_QUESTION_BANK: ProfileQuestion[] = [
       { label: "Use the ambiguity as an opportunity to shape the new structure by taking initiative on visible projects", scores: { tolerance_for_ambiguity: 9, delivery_vs_rigour_bias: 7 } },
     ],
   },
+  {
+    id: "risk_evidence_02",
+    tier: "extended",
+    category: "Risk & Evidence",
+    scenario:
+      "Your team proposes a significant strategic pivot. Their presentation is compelling but relies heavily on anecdotal evidence and market intuition.",
+    context:
+      "The current strategy is safe but showing diminishing returns. Competitor activity suggests the market is shifting.",
+    options: [
+      { label: "Reject the pivot until they bring quantitative market research and financial modelling", scores: { risk_appetite: 2, evidence_threshold: 9 } },
+      { label: "Ask for a structured pilot with defined metrics before committing fully", scores: { risk_appetite: 5, evidence_threshold: 6 } },
+      { label: "Approve a time-boxed experiment with limited resources to test the thesis", scores: { risk_appetite: 7, evidence_threshold: 4 } },
+      { label: "Back the pivot — market intuition from experienced operators is evidence enough", scores: { risk_appetite: 9, evidence_threshold: 2 } },
+    ],
+  },
+  {
+    id: "ambiguity_02",
+    tier: "extended",
+    category: "Ambiguity & Clarity",
+    scenario:
+      "You are asked to make a hiring decision for a critical role. Two finalists are close, and your team is split.",
+    context:
+      "The role has been open for 3 months. Each additional week costs the team productivity.",
+    options: [
+      { label: "Run additional assessment rounds until a clear winner emerges", scores: { tolerance_for_ambiguity: 2, delivery_vs_rigour_bias: 2 } },
+      { label: "Define the three most critical criteria and score both candidates objectively", scores: { tolerance_for_ambiguity: 4, delivery_vs_rigour_bias: 4 } },
+      { label: "Pick the one whose strengths best match the immediate project needs", scores: { tolerance_for_ambiguity: 7, delivery_vs_rigour_bias: 7 } },
+      { label: "Trust your gut — both are qualified, and speed of decision matters more than marginal differences", scores: { tolerance_for_ambiguity: 9, delivery_vs_rigour_bias: 9 } },
+    ],
+  },
+  {
+    id: "intervention_02",
+    tier: "extended",
+    category: "Intervention & Delegation",
+    scenario:
+      "During a board presentation, a colleague presents data you believe is materially misleading. Correcting them publicly would be awkward.",
+    context:
+      "The board is about to make a funding decision based on this data. Your colleague outranks you.",
+    options: [
+      { label: "Raise it immediately in the meeting — accuracy matters more than comfort", scores: { intervention_frequency: 9, escalation_bias: 8 } },
+      { label: "Ask a clarifying question that surfaces the discrepancy without direct confrontation", scores: { intervention_frequency: 7, escalation_bias: 5 } },
+      { label: "Note it and raise it privately with your colleague after the meeting", scores: { intervention_frequency: 4, escalation_bias: 3 } },
+      { label: "Let it go — they may have context you do not, and the board will do its own due diligence", scores: { intervention_frequency: 2, escalation_bias: 2 } },
+    ],
+  },
 ];
+
+export const CORE_QUESTIONS = PROFILE_QUESTION_BANK.filter((q) => q.tier === "core");
+export const EXTENDED_QUESTIONS = PROFILE_QUESTION_BANK.filter((q) => q.tier === "extended");
