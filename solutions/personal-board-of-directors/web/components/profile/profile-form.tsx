@@ -3,7 +3,12 @@
 import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useProfileContext } from "@/lib/profile-context";
-import { PROFILE_QUESTION_BANK, scoreResponses } from "@/lib/profile-questions";
+import {
+  CORE_QUESTIONS,
+  EXTENDED_QUESTIONS,
+  PROFILE_QUESTION_BANK,
+  scoreResponses,
+} from "@/lib/profile-questions";
 import { RubricChart } from "@/components/rubric-chart";
 import { ProfileImport } from "@/components/profile/profile-import";
 import { GoalsDraft } from "@/components/profile/goals-draft";
@@ -15,6 +20,7 @@ import {
   type ProfileDraft,
 } from "@/lib/profile-draft";
 import type {
+  ProfileQuestion,
   ProfileStep,
   SeniorityLevel,
   TimeHorizon,
@@ -169,6 +175,10 @@ export function ProfileForm() {
 
   // Assessment
   const [responses, setResponses] = useState<Record<string, number>>(initial.responses);
+  // Optional extra scenarios, shown on request (or when a draft already answered some)
+  const [showExtended, setShowExtended] = useState(() =>
+    EXTENDED_QUESTIONS.some((q) => initial.responses[q.id] !== undefined)
+  );
 
   // Import / draft suggestions. "suggested" fields carry a review badge until
   // edited; "touched" fields were set by the user and are never overwritten
@@ -257,7 +267,9 @@ export function ProfileForm() {
     setResponses((prev) => ({ ...prev, [questionId]: optionIndex }));
   }, []);
 
-  const allQuestionsAnswered = PROFILE_QUESTION_BANK.every((q) => responses[q.id] !== undefined);
+  const coreAnswered = CORE_QUESTIONS.filter((q) => responses[q.id] !== undefined).length;
+  const extendedAnswered = EXTENDED_QUESTIONS.filter((q) => responses[q.id] !== undefined).length;
+  const allCoreAnswered = coreAnswered === CORE_QUESTIONS.length;
 
   const splitCommas = (s: string): string[] =>
     s.split(",").map((x) => x.trim()).filter(Boolean);
@@ -266,7 +278,11 @@ export function ProfileForm() {
   const goalsValid = primaryGoal.trim() && successDefinition.trim() && sacrifices.trim() && nonNegotiables.trim() && resourceLimits.trim();
 
   const buildProfile = useCallback((): WebUserProfile => {
-    const questionResponses: ProfileQuestionResponse[] = Object.entries(responses).map(
+    // Only scenarios still in the bank (drafts may hold answers to retired ones)
+    const assessmentResponses = Object.fromEntries(
+      Object.entries(responses).filter(([id]) => PROFILE_QUESTION_BANK.some((q) => q.id === id))
+    );
+    const questionResponses: ProfileQuestionResponse[] = Object.entries(assessmentResponses).map(
       ([question_id, selected_option]) => ({ question_id, selected_option })
     );
     const rubric = scoreResponses(questionResponses);
@@ -287,6 +303,7 @@ export function ProfileForm() {
       knownWeaknesses: splitCommas(weaknesses),
       blindSpots: splitCommas(blindSpots),
       patterns: [],
+      assessmentResponses,
       rubric,
       completedAt: new Date().toISOString(),
     };
@@ -331,6 +348,7 @@ export function ProfileForm() {
     setWeaknesses(fields.weaknesses);
     setBlindSpots(fields.blindSpots);
     setResponses({});
+    setShowExtended(false);
     setSuggested(new Set());
     setConflicts([]);
     setRestoredDraftAt(null);
@@ -347,8 +365,16 @@ export function ProfileForm() {
 
   const handleRetake = useCallback(() => {
     setResponses({});
+    setShowExtended(false);
     setStep("about");
   }, []);
+
+  // Answer the optional scenarios later, keeping the core answers already given
+  const handleSharpen = useCallback(() => {
+    setResponses(existingProfile?.assessmentResponses ?? {});
+    setShowExtended(true);
+    setStep("assessment");
+  }, [existingProfile]);
 
   const stepIndex = STEPS.indexOf(step);
 
@@ -628,53 +654,58 @@ export function ProfileForm() {
           <div className="rounded-[16px] border border-board-border bg-board-surface px-6 py-7">
             <h2 className="text-2xl font-serif text-board-text mb-1">Judgement Assessment</h2>
             <p className="text-sm text-board-text-secondary mb-3">
-              Read each scenario and choose the response closest to how you would actually act — not how you think you should act.
+              {CORE_QUESTIONS.length} quick scenarios. Choose the response closest to how you would actually act — not how you think you should act.
             </p>
             <p className="text-xs text-board-text-tertiary">
-              {Object.keys(responses).length} of {PROFILE_QUESTION_BANK.length} answered
+              {coreAnswered} of {CORE_QUESTIONS.length} answered
+              {showExtended && ` · ${extendedAnswered} of ${EXTENDED_QUESTIONS.length} extra`}
             </p>
           </div>
 
           <div className="space-y-4">
-            {PROFILE_QUESTION_BANK.map((question, qi) => (
-              <div
+            {CORE_QUESTIONS.map((question, qi) => (
+              <ScenarioCard
                 key={question.id}
-                className="rounded-[16px] border border-board-border bg-board-surface px-6 py-5"
-              >
-                <div className="flex items-start gap-3 mb-3">
-                  <span className="flex-shrink-0 rounded-full bg-board-accent/10 px-2.5 py-0.5 text-xs font-medium text-board-accent">
-                    {qi + 1}
-                  </span>
-                  <span className="text-[10px] uppercase tracking-wider text-board-text-tertiary font-medium">
-                    {question.category}
-                  </span>
-                </div>
-
-                <p className="text-sm text-board-text font-medium mb-1.5">{question.scenario}</p>
-                <p className="text-xs text-board-text-tertiary mb-4">{question.context}</p>
-
-                <div className="space-y-2">
-                  {question.options.map((option, oi) => {
-                    const isSelected = responses[question.id] === oi;
-                    return (
-                      <button
-                        key={oi}
-                        type="button"
-                        onClick={() => handleResponse(question.id, oi)}
-                        className={`w-full text-left rounded-[10px] border px-4 py-3 text-xs transition-all ${
-                          isSelected
-                            ? "border-board-accent bg-board-accent/10 text-board-text"
-                            : "border-board-border text-board-text-secondary hover:border-board-accent/30 hover:bg-board-surface-raised"
-                        }`}
-                      >
-                        {option.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+                question={question}
+                number={qi + 1}
+                selected={responses[question.id]}
+                onSelect={(oi) => handleResponse(question.id, oi)}
+              />
             ))}
           </div>
+
+          {showExtended ? (
+            <div className="space-y-4">
+              <div className="px-1">
+                <h3 className="text-lg font-serif text-board-text">For a more precise profile</h3>
+                <p className="text-xs text-board-text-tertiary">
+                  Optional — each one adds another reading for two dimensions. Answer as many as you like.
+                </p>
+              </div>
+              {EXTENDED_QUESTIONS.map((question, qi) => (
+                <ScenarioCard
+                  key={question.id}
+                  question={question}
+                  number={CORE_QUESTIONS.length + qi + 1}
+                  selected={responses[question.id]}
+                  onSelect={(oi) => handleResponse(question.id, oi)}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-[16px] border border-dashed border-board-border px-6 py-5 text-center">
+              <p className="text-sm text-board-text-secondary">
+                Want a more precise profile? Answer {EXTENDED_QUESTIONS.length} more scenarios — about a minute.
+              </p>
+              <button
+                type="button"
+                onClick={() => setShowExtended(true)}
+                className="mt-3 rounded-lg border border-board-accent/40 px-4 py-2 text-xs font-medium text-board-accent transition-colors hover:bg-board-accent/10"
+              >
+                Add {EXTENDED_QUESTIONS.length} more scenarios
+              </button>
+            </div>
+          )}
 
           <div className="flex gap-3">
             <button
@@ -687,7 +718,7 @@ export function ProfileForm() {
             <button
               type="button"
               onClick={handleComplete}
-              disabled={!allQuestionsAnswered}
+              disabled={!allCoreAnswered}
               className="flex-1 rounded-[12px] bg-board-accent px-6 py-3.5 text-sm font-semibold text-board-accent-contrast transition-colors hover:bg-board-accent/90 disabled:opacity-50 disabled:bg-board-surface-raised disabled:text-board-text-secondary disabled:cursor-not-allowed"
             >
               View My Profile
@@ -700,6 +731,7 @@ export function ProfileForm() {
         <ProfileComplete
           profile={existingProfile}
           onRetake={handleRetake}
+          onSharpen={handleSharpen}
           onGoToBoard={() => router.push("/board")}
         />
       )}
@@ -720,15 +752,72 @@ export function ProfileForm() {
   );
 }
 
+function ScenarioCard({
+  question,
+  number,
+  selected,
+  onSelect,
+}: {
+  question: ProfileQuestion;
+  number: number;
+  selected: number | undefined;
+  onSelect: (optionIndex: number) => void;
+}) {
+  return (
+    <div className="rounded-[16px] border border-board-border bg-board-surface px-6 py-5">
+      <div className="flex items-start gap-3 mb-3">
+        <span className="flex-shrink-0 rounded-full bg-board-accent/10 px-2.5 py-0.5 text-xs font-medium text-board-accent">
+          {number}
+        </span>
+        <span className="text-[10px] uppercase tracking-wider text-board-text-tertiary font-medium">
+          {question.category}
+        </span>
+      </div>
+
+      <p className="text-sm text-board-text font-medium mb-1.5">{question.scenario}</p>
+      <p className="text-xs text-board-text-tertiary mb-4">{question.context}</p>
+
+      <div className="space-y-2">
+        {question.options.map((option, oi) => {
+          const isSelected = selected === oi;
+          return (
+            <button
+              key={oi}
+              type="button"
+              aria-pressed={isSelected}
+              onClick={() => onSelect(oi)}
+              className={`w-full text-left rounded-[10px] border px-4 py-3 text-xs transition-all ${
+                isSelected
+                  ? "border-board-accent bg-board-accent/10 text-board-text"
+                  : "border-board-border text-board-text-secondary hover:border-board-accent/30 hover:bg-board-surface-raised"
+              }`}
+            >
+              {option.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function ProfileComplete({
   profile,
   onRetake,
+  onSharpen,
   onGoToBoard,
 }: {
   profile: WebUserProfile;
   onRetake: () => void;
+  onSharpen: () => void;
   onGoToBoard: () => void;
 }) {
+  const answers = profile.assessmentResponses;
+  const scenarioCount = answers
+    ? PROFILE_QUESTION_BANK.filter((q) => answers[q.id] !== undefined).length
+    : null;
+  const canSharpen = answers !== undefined && EXTENDED_QUESTIONS.some((q) => answers[q.id] === undefined);
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="rounded-[16px] border border-board-border bg-board-surface px-6 py-7">
@@ -740,6 +829,23 @@ function ProfileComplete({
         </p>
 
         <RubricChart rubric={profile.rubric} />
+
+        {scenarioCount !== null && (
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-board-border pt-4">
+            <p className="text-xs text-board-text-tertiary">
+              Based on {scenarioCount} scenarios{canSharpen ? "" : " — the most precise profile"}.
+            </p>
+            {canSharpen && (
+              <button
+                type="button"
+                onClick={onSharpen}
+                className="rounded-lg border border-board-accent/40 px-3 py-1.5 text-xs font-medium text-board-accent transition-colors hover:bg-board-accent/10"
+              >
+                Sharpen it — answer {EXTENDED_QUESTIONS.filter((q) => answers?.[q.id] === undefined).length} more
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="rounded-[16px] border border-board-border bg-board-surface px-6 py-7">
