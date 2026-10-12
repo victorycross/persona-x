@@ -67,7 +67,7 @@ export async function POST(request: Request): Promise<NextResponse> {
           content: `Project context: "${projectBrief}"\n\nExisting Team Brief to improve:\n\n${JSON.stringify(brief, null, 2)}\n\nRephrase for improved clarity and language quality. Output valid JSON only.`,
         },
       ],
-      maxTokens: 2048,
+      maxTokens: 4096,
       temperature: 0.3,
     });
 

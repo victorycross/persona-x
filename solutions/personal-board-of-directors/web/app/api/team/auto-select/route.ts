@@ -3,6 +3,7 @@ import { checkApiKey, apiErrorResponse } from "@/lib/api-error";
 import { createClient, sendMessage } from "@persona-x/llm/client.js";
 import { TEAM_PERSONA_CATALOGUE } from "@/lib/team-personas";
 import type { PersonaStance, PersonaStanceMap, ProjectResources } from "@/lib/team-types";
+import { parseJsonObject } from "@/lib/llm-json";
 
 export const maxDuration = 30;
 
@@ -82,12 +83,9 @@ export async function POST(request: Request): Promise<NextResponse> {
     });
 
     // Parse and validate the response
-    const jsonMatch = result.content.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
-    const jsonStr = jsonMatch?.[1]?.trim() ?? result.content.trim();
-
     let parsed: { selectedPersonaIds?: unknown; stances?: unknown };
     try {
-      parsed = JSON.parse(jsonStr) as { selectedPersonaIds?: unknown; stances?: unknown };
+      parsed = parseJsonObject(result.content) as { selectedPersonaIds?: unknown; stances?: unknown };
     } catch {
       return NextResponse.json({ error: "Failed to parse AI response." }, { status: 500 });
     }

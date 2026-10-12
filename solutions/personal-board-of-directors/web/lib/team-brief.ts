@@ -1,5 +1,6 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import { sendMessage } from "@persona-x/llm/client.js";
+import { parseJsonObject, withParseRetry } from "./llm-json";
 import type { TeamBrief, PersonaResponse } from "./team-types";
 
 const SYSTEM_PROMPT = `You are the Team Brief synthesiser for a Software Team Advisor service.
@@ -34,6 +35,7 @@ Rules:
 - Unknowns are not the same as risks — they are gaps in knowledge, not known problems
 - The verdict must reflect genuine consensus or clearly note where the team is divided
 - Use Australian English spelling throughout
+- Be concise: at most 5 items in any list, and keep each string under about 40 words
 - Output ONLY valid JSON, no markdown or explanation`;
 
 /**
@@ -58,21 +60,22 @@ ${responseSummary}
 
 Synthesise these perspectives into a Team Brief. Output valid JSON only.`;
 
-  const result = await sendMessage(client, {
-    system: SYSTEM_PROMPT,
-    messages: [{ role: "user", content: userPrompt }],
-    maxTokens: 2048,
-    temperature: 0.3,
-  });
-
-  return parseTeamBrief(result.content);
+  return withParseRetry(
+    async () =>
+      (
+        await sendMessage(client, {
+          system: SYSTEM_PROMPT,
+          messages: [{ role: "user", content: userPrompt }],
+          maxTokens: 4096,
+          temperature: 0.3,
+        })
+      ).content,
+    parseTeamBrief
+  );
 }
 
 export function parseTeamBrief(content: string): TeamBrief {
-  const jsonMatch = content.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
-  const jsonStr = jsonMatch?.[1]?.trim() ?? content.trim();
-
-  const parsed = JSON.parse(jsonStr);
+  const parsed: any = parseJsonObject(content); // validated field by field below
 
   return {
     alignment: {
