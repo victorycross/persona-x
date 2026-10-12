@@ -1,4 +1,5 @@
 import type { SeniorityLevel, TimeHorizon, WebUserProfile } from "./types";
+import { judgementSummary } from "./judgement-summary";
 
 /**
  * Profile Summary
@@ -41,6 +42,7 @@ export function buildProfileContext(profile: WebUserProfile): string {
     profile.resourceLimits && `Resource limits: ${profile.resourceLimits}`,
     profile.knownWeaknesses.length > 0 && `Self-identified weaknesses: ${profile.knownWeaknesses.join(", ")}`,
     profile.blindSpots.length > 0 && `Possible blind spots: ${profile.blindSpots.join(", ")}`,
+    `Judgement style (from a scenario assessment): ${judgementSummary(profile.rubric)}`,
   ].filter(Boolean);
 
   return lines.join("\n");

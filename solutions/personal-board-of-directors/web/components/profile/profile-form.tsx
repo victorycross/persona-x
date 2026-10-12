@@ -10,6 +10,7 @@ import {
   scoreResponses,
 } from "@/lib/profile-questions";
 import { RubricChart } from "@/components/rubric-chart";
+import { judgementSummary, riskProfile } from "@/lib/judgement-summary";
 import { ProfileImport } from "@/components/profile/profile-import";
 import { GoalsDraft } from "@/components/profile/goals-draft";
 import type { GoalsDraftResult, ProfileImportResult } from "@/lib/profile-import";
@@ -817,6 +818,8 @@ function ProfileComplete({
     ? PROFILE_QUESTION_BANK.filter((q) => answers[q.id] !== undefined).length
     : null;
   const canSharpen = answers !== undefined && EXTENDED_QUESTIONS.some((q) => answers[q.id] === undefined);
+  const risk = riskProfile(profile.rubric);
+  const summary = judgementSummary(profile.rubric);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -827,6 +830,38 @@ function ProfileComplete({
         <p className="text-sm text-board-text-secondary mb-6">
           Your advocate will champion your position using this profile to calibrate their arguments.
         </p>
+
+        <div className="mb-6 rounded-[12px] border border-board-border bg-board-bg px-5 py-5">
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <p className="text-xs uppercase tracking-widest text-board-text-tertiary font-sans">Risk profile</p>
+              <p className="mt-1 text-2xl font-serif text-board-text">{risk.label}</p>
+            </div>
+            <p className="text-sm text-board-text-secondary">
+              <span className="text-2xl font-semibold text-board-accent">{risk.score.toFixed(1)}</span> / 10
+            </p>
+          </div>
+          <div
+            role="meter"
+            aria-label="Risk profile score"
+            aria-valuemin={1}
+            aria-valuemax={10}
+            aria-valuenow={risk.score}
+            aria-valuetext={`${risk.score.toFixed(1)} out of 10, ${risk.label}`}
+            className="relative mt-3 h-1.5 rounded-full bg-board-border"
+          >
+            <div
+              className="absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-board-bg bg-board-accent"
+              style={{ left: `${((risk.score - 1) / 9) * 100}%` }}
+            />
+          </div>
+          <div className="mt-1.5 flex justify-between text-[10px] uppercase tracking-wider text-board-text-tertiary">
+            <span>Cautious</span>
+            <span>Balanced</span>
+            <span>Bold</span>
+          </div>
+          <p className="mt-4 text-sm leading-relaxed text-board-text-secondary">{summary}</p>
+        </div>
 
         <RubricChart rubric={profile.rubric} />
 
