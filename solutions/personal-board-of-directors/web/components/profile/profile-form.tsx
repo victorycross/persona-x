@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useProfileContext } from "@/lib/profile-context";
 import { PROFILE_QUESTION_BANK, scoreResponses } from "@/lib/profile-questions";
@@ -8,6 +8,12 @@ import { RubricChart } from "@/components/rubric-chart";
 import { ProfileImport } from "@/components/profile/profile-import";
 import { GoalsDraft } from "@/components/profile/goals-draft";
 import type { GoalsDraftResult, ProfileImportResult } from "@/lib/profile-import";
+import {
+  clearProfileDraft,
+  loadProfileDraft,
+  saveProfileDraft,
+  type ProfileDraft,
+} from "@/lib/profile-draft";
 import type {
   ProfileStep,
   SeniorityLevel,
@@ -101,37 +107,75 @@ function goalsToSuggestions(r: GoalsDraftResult): Suggestion[] {
   ];
 }
 
+type DraftFields = ProfileDraft["fields"];
+
+/** Form field values for a saved profile, or the blank defaults. */
+function profileFields(p: WebUserProfile | null): DraftFields {
+  return {
+    name: p?.name ?? "",
+    background: p?.background ?? "",
+    seniorityLevel: p?.seniorityLevel ?? "mid",
+    domains: p?.experienceDomains.join(", ") ?? "",
+    context: p?.context ?? "",
+    primaryGoal: p?.primaryGoal ?? "",
+    successDefinition: p?.successDefinition ?? "",
+    timeHorizon: p?.timeHorizon ?? "medium_term",
+    sacrifices: p?.sacrificesAcceptable.join(", ") ?? "",
+    nonNegotiables: p?.nonNegotiables.join(", ") ?? "",
+    resourceLimits: p?.resourceLimits ?? "",
+    weaknesses: p?.knownWeaknesses.join(", ") ?? "",
+    blindSpots: p?.blindSpots.join(", ") ?? "",
+  };
+}
+
+/** Use an unfinished draft when there is no profile, or it is newer than the saved one. */
+function initialFormState(existing: WebUserProfile | null) {
+  const draft = loadProfileDraft();
+  if (draft && (!existing || draft.savedAt > existing.completedAt)) {
+    return { draft, step: draft.step as ProfileStep, fields: draft.fields, responses: draft.responses };
+  }
+  return {
+    draft: null,
+    step: (existing ? "complete" : "about") as ProfileStep,
+    fields: profileFields(existing),
+    responses: {} as Record<string, number>,
+  };
+}
+
 export function ProfileForm() {
   const router = useRouter();
   const { profile: existingProfile, saveProfile } = useProfileContext();
-  const [step, setStep] = useState<ProfileStep>(existingProfile ? "complete" : "about");
+  // Read once on mount: an unfinished draft takes precedence over the saved profile
+  const [initial] = useState(() => initialFormState(existingProfile));
+  const [restoredDraftAt, setRestoredDraftAt] = useState<string | null>(initial.draft?.savedAt ?? null);
+  const [step, setStep] = useState<ProfileStep>(initial.step);
 
   // About fields
-  const [name, setName] = useState(existingProfile?.name ?? "");
-  const [background, setBackground] = useState(existingProfile?.background ?? "");
-  const [seniorityLevel, setSeniorityLevel] = useState<SeniorityLevel>(existingProfile?.seniorityLevel ?? "mid");
-  const [domains, setDomains] = useState(existingProfile?.experienceDomains.join(", ") ?? "");
-  const [context, setContext] = useState(existingProfile?.context ?? "");
+  const [name, setName] = useState(initial.fields.name);
+  const [background, setBackground] = useState(initial.fields.background);
+  const [seniorityLevel, setSeniorityLevel] = useState<SeniorityLevel>(initial.fields.seniorityLevel);
+  const [domains, setDomains] = useState(initial.fields.domains);
+  const [context, setContext] = useState(initial.fields.context);
 
   // Goals fields
-  const [primaryGoal, setPrimaryGoal] = useState(existingProfile?.primaryGoal ?? "");
-  const [successDefinition, setSuccessDefinition] = useState(existingProfile?.successDefinition ?? "");
-  const [timeHorizon, setTimeHorizon] = useState<TimeHorizon>(existingProfile?.timeHorizon ?? "medium_term");
-  const [sacrifices, setSacrifices] = useState(existingProfile?.sacrificesAcceptable.join(", ") ?? "");
-  const [nonNegotiables, setNonNegotiables] = useState(existingProfile?.nonNegotiables.join(", ") ?? "");
-  const [resourceLimits, setResourceLimits] = useState(existingProfile?.resourceLimits ?? "");
-  const [weaknesses, setWeaknesses] = useState(existingProfile?.knownWeaknesses.join(", ") ?? "");
-  const [blindSpots, setBlindSpots] = useState(existingProfile?.blindSpots.join(", ") ?? "");
+  const [primaryGoal, setPrimaryGoal] = useState(initial.fields.primaryGoal);
+  const [successDefinition, setSuccessDefinition] = useState(initial.fields.successDefinition);
+  const [timeHorizon, setTimeHorizon] = useState<TimeHorizon>(initial.fields.timeHorizon);
+  const [sacrifices, setSacrifices] = useState(initial.fields.sacrifices);
+  const [nonNegotiables, setNonNegotiables] = useState(initial.fields.nonNegotiables);
+  const [resourceLimits, setResourceLimits] = useState(initial.fields.resourceLimits);
+  const [weaknesses, setWeaknesses] = useState(initial.fields.weaknesses);
+  const [blindSpots, setBlindSpots] = useState(initial.fields.blindSpots);
 
   // Assessment
-  const [responses, setResponses] = useState<Record<string, number>>({});
+  const [responses, setResponses] = useState<Record<string, number>>(initial.responses);
 
   // Import / draft suggestions. "suggested" fields carry a review badge until
   // edited; "touched" fields were set by the user and are never overwritten
   // without confirmation.
   const [suggested, setSuggested] = useState<Set<FieldKey>>(new Set());
   const [touched, setTouched] = useState<Set<FieldKey>>(
-    () => new Set<FieldKey>(existingProfile ? ["seniorityLevel", "timeHorizon"] : [])
+    () => new Set<FieldKey>(existingProfile || initial.draft ? ["seniorityLevel", "timeHorizon"] : [])
   );
   const [conflicts, setConflicts] = useState<Suggestion[]>([]);
 
@@ -248,9 +292,56 @@ export function ProfileForm() {
     };
   }, [name, background, seniorityLevel, domains, context, primaryGoal, successDefinition, timeHorizon, sacrifices, nonNegotiables, resourceLimits, weaknesses, blindSpots, responses]);
 
+  // Keep unfinished answers in the browser until the profile is completed
+  useEffect(() => {
+    if (step === "complete") return;
+    const fields: DraftFields = {
+      name, background, seniorityLevel, domains, context,
+      primaryGoal, successDefinition, timeHorizon, sacrifices, nonNegotiables, resourceLimits,
+      weaknesses, blindSpots,
+    };
+    const baseline = profileFields(existingProfile);
+    const dirty =
+      (Object.keys(fields) as (keyof DraftFields)[]).some((k) => fields[k] !== baseline[k]) ||
+      Object.keys(responses).length > 0;
+    if (dirty) {
+      saveProfileDraft({ version: 1, savedAt: new Date().toISOString(), step, fields, responses });
+    } else {
+      clearProfileDraft();
+    }
+  }, [
+    step, name, background, seniorityLevel, domains, context, primaryGoal, successDefinition,
+    timeHorizon, sacrifices, nonNegotiables, resourceLimits, weaknesses, blindSpots, responses, existingProfile,
+  ]);
+
+  const discardDraft = useCallback(() => {
+    clearProfileDraft();
+    const fields = profileFields(existingProfile);
+    setName(fields.name);
+    setBackground(fields.background);
+    setSeniorityLevel(fields.seniorityLevel);
+    setDomains(fields.domains);
+    setContext(fields.context);
+    setPrimaryGoal(fields.primaryGoal);
+    setSuccessDefinition(fields.successDefinition);
+    setTimeHorizon(fields.timeHorizon);
+    setSacrifices(fields.sacrifices);
+    setNonNegotiables(fields.nonNegotiables);
+    setResourceLimits(fields.resourceLimits);
+    setWeaknesses(fields.weaknesses);
+    setBlindSpots(fields.blindSpots);
+    setResponses({});
+    setSuggested(new Set());
+    setConflicts([]);
+    setRestoredDraftAt(null);
+    setStep(existingProfile ? "complete" : "about");
+  }, [existingProfile]);
+
   const handleComplete = useCallback(() => {
     const profile = buildProfile();
+    clearProfileDraft();
     saveProfile(profile);
+    setRestoredDraftAt(null);
     setStep("complete");
   }, [buildProfile, saveProfile]);
 
@@ -289,6 +380,25 @@ export function ProfileForm() {
           {STEP_LABELS[step]}
         </p>
       </nav>
+
+      {restoredDraftAt && step !== "complete" && (
+        <div
+          role="status"
+          className="mb-6 flex items-center justify-between gap-3 rounded-[12px] border border-board-border bg-board-surface-raised px-5 py-3 text-sm"
+        >
+          <span className="text-board-text-secondary">
+            Welcome back — we kept your unfinished answers from{" "}
+            {new Date(restoredDraftAt).toLocaleString("en-AU", { dateStyle: "medium", timeStyle: "short" })}.
+          </span>
+          <button
+            type="button"
+            onClick={discardDraft}
+            className="flex-shrink-0 text-xs font-medium text-board-text-tertiary hover:text-board-text-secondary"
+          >
+            {existingProfile ? "Discard changes" : "Start over"}
+          </button>
+        </div>
+      )}
 
       {step === "about" && (
         <div className="space-y-6">
