@@ -1,5 +1,6 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import { sendMessage } from "@persona-x/llm/client.js";
+import { parseJsonObject, withParseRetry } from "./llm-json";
 import type { BoardBrief, PersonaResponse } from "./types";
 
 function buildBriefSystemPrompt(personaCount: number): string {
@@ -34,6 +35,7 @@ Rules:
 - The recommendation must be weighted by persona relevance to the decision type
 - Low-confidence recommendations should be labelled honestly
 - Some advisors may have received follow-up challenges. Their refined positions should carry more weight than initial takes on those points.
+- Be concise: at most 5 items in any list, and keep each string under about 40 words
 - Output ONLY valid JSON, no markdown or explanation`;
 }
 
@@ -69,22 +71,22 @@ ${responseSummary}
 
 Synthesise these perspectives into a Board Brief. Output valid JSON only.`;
 
-  const result = await sendMessage(client, {
-    system: buildBriefSystemPrompt(responses.length),
-    messages: [{ role: "user", content: userPrompt }],
-    maxTokens: 2048,
-    temperature: 0.3,
-  });
-
-  return parseBoardBrief(result.content);
+  return withParseRetry(
+    async () =>
+      (
+        await sendMessage(client, {
+          system: buildBriefSystemPrompt(responses.length),
+          messages: [{ role: "user", content: userPrompt }],
+          maxTokens: 4096,
+          temperature: 0.3,
+        })
+      ).content,
+    parseBoardBrief
+  );
 }
 
 export function parseBoardBrief(content: string): BoardBrief {
-  // Extract JSON from possible markdown code blocks
-  const jsonMatch = content.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
-  const jsonStr = jsonMatch?.[1]?.trim() ?? content.trim();
-
-  const parsed = JSON.parse(jsonStr);
+  const parsed: any = parseJsonObject(content); // validated field by field below
 
   // Validate structure with sensible defaults
   return {
